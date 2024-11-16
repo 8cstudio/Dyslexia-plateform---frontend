@@ -7,6 +7,7 @@ import Chat from "./pages/Chat";
 import Tasks from "./pages/Tasks";
 import Contact from "./pages/Contact";
 import TextToSpeech from "./pages/Reader";
+import Home from "./pages/Home";
 
 const App = () => {
   return (
@@ -14,7 +15,7 @@ const App = () => {
       <Route path="/" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<HomeLayout />}>
-        <Route index element={<h1>Home page</h1>} />
+        <Route index element={<Home />} />
         <Route path="/dashboard/profile" element={<Profile />} />
         <Route path="/dashboard/chat" element={<Chat />} />
         <Route path="/dashboard/chat/:id" element={<Chat />} />

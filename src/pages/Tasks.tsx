@@ -57,10 +57,10 @@ const Tasks = () => {
   };
 
   return (
-    <div className="min-h-screen  p-6">
+    <div className="min-h-screen bg-white p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Calendar and Date Picker */}
-        <section className="bg-white p-4 rounded-lg shadow-md">
+        <section className=" p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Calendar size={20} className="mr-2" /> Set Deadlines on Calendar
           </h2>
@@ -68,7 +68,7 @@ const Tasks = () => {
         </section>
 
         {/* Task List */}
-        <section className="bg-white p-4 rounded-lg shadow-md">
+        <section className="bg-white p-4 rounded-lg border ">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <CheckCircle size={20} className="mr-2" /> Manage Your Tasks
           </h2>
@@ -136,7 +136,7 @@ const Tasks = () => {
         </section>
 
         {/* Goal Setting */}
-        <section className="bg-white p-4 rounded-lg shadow-md">
+        <section className="p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Flag size={20} className="mr-2" /> Set Your Goals
           </h2>
@@ -177,7 +177,7 @@ const Tasks = () => {
         </section>
 
         {/* Achievements */}
-        <section className="bg-white p-4 rounded-lg shadow-md">
+        <section className="p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Star size={20} className="mr-2" /> Your Achievements
           </h2>

@@ -11,7 +11,7 @@ const Contact = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -19,14 +19,14 @@ const Contact = () => {
     }));
   };
 
-  const handleRating = (rating) => {
+  const handleRating = (rating: any) => {
     setFormData((prevData) => ({
       ...prevData,
       rating,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     const { name, email, rating, message } = formData;
 
@@ -41,7 +41,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen  ">
+    <div className="min-h-screen  bg-white">
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg ">
         <h2 className="text-2xl font-semibold text-center mb-4">Contact Us</h2>
         <p className="text-gray-600 text-center mb-6">
