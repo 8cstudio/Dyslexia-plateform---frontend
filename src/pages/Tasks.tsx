@@ -1,11 +1,25 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Calendar, CheckCircle, Flag, Star, Award, Plus } from "lucide-react";
 import { Datepicker } from "flowbite-react";
 
-const Tasks = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+// Task and Goal interfaces
+interface Task {
+  id: number;
+  title: string;
+  deadline: string;
+  completed: boolean;
+}
+
+interface Goal {
+  id: number;
+  title: string;
+  achieved: boolean;
+}
+
+const Tasks: React.FC = () => {
+  const selectedDate = useState<Date>(new Date())[0];
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [tasks, setTasks] = useState([
+  const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
       title: "Complete React module",
@@ -25,19 +39,22 @@ const Tasks = () => {
       completed: true,
     },
   ]);
-  const [goals, setGoals] = useState([
+
+  const [goals, setGoals] = useState<Goal[]>([
     { id: 1, title: "Finish 5 tasks", achieved: false },
     { id: 2, title: "Work on a project daily", achieved: false },
   ]);
 
-  // Task progress calculation
+  // Task completion progress
   const completedTasks = tasks.filter((task) => task.completed).length;
-  const totalTasks = tasks.length;
-  const progress = Math.floor((completedTasks / totalTasks) * 100);
+  const progress = tasks.length
+    ? Math.floor((completedTasks / tasks.length) * 100)
+    : 0;
 
-  const handleTaskCompletion = (id: any) => {
-    setTasks(
-      tasks.map((task) =>
+  // Handlers
+  const handleTaskCompletion = (id: number) => {
+    setTasks((prev) =>
+      prev.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
@@ -45,34 +62,41 @@ const Tasks = () => {
 
   const addTask = () => {
     if (newTaskTitle.trim()) {
-      const newTask = {
+      const newTask: Task = {
         id: tasks.length + 1,
-        title: newTaskTitle,
+        title: newTaskTitle.trim(),
         deadline: selectedDate.toISOString().split("T")[0],
         completed: false,
       };
-      setTasks([...tasks, newTask]);
+      setTasks((prev) => [...prev, newTask]);
       setNewTaskTitle("");
     }
+  };
+
+  const handleGoalToggle = (id: number) => {
+    setGoals((prev) =>
+      prev.map((goal) =>
+        goal.id === id ? { ...goal, achieved: !goal.achieved } : goal
+      )
+    );
   };
 
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Calendar and Date Picker */}
-        <section className=" p-4 rounded-lg border">
+        {/* Calendar Section */}
+        <section className="p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Calendar size={20} className="mr-2" /> Set Deadlines on Calendar
           </h2>
-          <Datepicker width={""} className="" value={selectedDate} inline />
+          <Datepicker value={selectedDate} inline />
         </section>
 
-        {/* Task List */}
-        <section className="bg-white p-4 rounded-lg border ">
+        {/* Task Management */}
+        <section className="bg-white p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <CheckCircle size={20} className="mr-2" /> Manage Your Tasks
           </h2>
-          {/* Input for New Task */}
           <div className="flex items-center space-x-2 mb-4">
             <input
               type="text"
@@ -122,7 +146,7 @@ const Tasks = () => {
           </ul>
           <div className="mt-4">
             <p className="text-sm text-gray-600">
-              Progress: {completedTasks} of {totalTasks} tasks completed
+              Progress: {completedTasks} of {tasks.length} tasks completed
             </p>
             <div className="relative pt-1">
               <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
@@ -135,7 +159,7 @@ const Tasks = () => {
           </div>
         </section>
 
-        {/* Goal Setting */}
+        {/* Goals Section */}
         <section className="p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Flag size={20} className="mr-2" /> Set Your Goals
@@ -146,13 +170,7 @@ const Tasks = () => {
                 <input
                   type="checkbox"
                   checked={goal.achieved}
-                  onChange={() =>
-                    setGoals(
-                      goals.map((g) =>
-                        g.id === goal.id ? { ...g, achieved: !g.achieved } : g
-                      )
-                    )
-                  }
+                  onChange={() => handleGoalToggle(goal.id)}
                   className="w-4 h-4"
                 />
                 <span
@@ -176,7 +194,7 @@ const Tasks = () => {
           </ul>
         </section>
 
-        {/* Achievements */}
+        {/* Achievements Section */}
         <section className="p-4 rounded-lg border">
           <h2 className="text-xl font-semibold flex items-center mb-4">
             <Star size={20} className="mr-2" /> Your Achievements

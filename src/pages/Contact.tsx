@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { Mail, Phone, Send, Star } from "lucide-react";
 
+interface FormData {
+  name: string;
+  email: string;
+  rating: number;
+  message: string;
+}
+
 const Contact = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     rating: 0,
     message: "",
   });
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange = (e: any) => {
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Handle input change
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -19,35 +30,41 @@ const Contact = () => {
     }));
   };
 
-  const handleRating = (rating: any) => {
+  // Handle rating change
+  const handleRating = (rating: number) => {
     setFormData((prevData) => ({
       ...prevData,
       rating,
     }));
   };
 
-  const handleSubmit = (e: any) => {
+  // Handle form submission
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { name, email, rating, message } = formData;
 
+    const { name, email, message } = formData;
+
+    // Validation check
     if (!name || !email || !message) {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
 
+    // Success message
     setSuccessMessage("Thank you for your feedback!");
     setErrorMessage("");
     setFormData({ name: "", email: "", rating: 0, message: "" });
   };
 
   return (
-    <div className="min-h-screen  bg-white">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg ">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg">
         <h2 className="text-2xl font-semibold text-center mb-4">Contact Us</h2>
         <p className="text-gray-600 text-center mb-6">
           We value your feedback! Please let us know how we can improve.
         </p>
 
+        {/* Success/Error Messages */}
         {successMessage && (
           <p className="text-green-500 text-center mb-4">{successMessage}</p>
         )}
@@ -55,6 +72,7 @@ const Contact = () => {
           <p className="text-red-500 text-center mb-4">{errorMessage}</p>
         )}
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
@@ -91,7 +109,7 @@ const Contact = () => {
           {/* Rating */}
           <div>
             <label className="block text-gray-700 font-medium">
-              Rating our Website
+              Rate Our Website
             </label>
             <div className="flex items-center space-x-1 mt-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -99,7 +117,7 @@ const Contact = () => {
                   key={star}
                   type="button"
                   onClick={() => handleRating(star)}
-                  className={`text-yellow-500 hover:text-yellow-600 ${
+                  className={`${
                     formData.rating >= star
                       ? "text-yellow-500"
                       : "text-gray-400"
@@ -140,7 +158,7 @@ const Contact = () => {
           </button>
         </form>
 
-        {/* Contact Information */}
+        {/* Contact Info */}
         <div className="mt-8 text-center">
           <p className="text-gray-600">Or reach us directly at:</p>
           <div className="flex items-center justify-center space-x-4 mt-2">
