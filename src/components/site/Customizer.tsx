@@ -1,14 +1,19 @@
 import { ToggleSwitch } from "flowbite-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Customizer = () => {
+  const navigate = useNavigate();
+
+  const ReloadPage = () => {
+    navigate(0);
+  };
   // Color options
   const bgColors = [
     "#D8BFD8",
     "#FFD700",
     "#87CEEB",
     "#32CD32",
-
     "#9370DB",
     "#F8F9FA",
   ];
@@ -62,8 +67,16 @@ const Customizer = () => {
     localStorage.getItem("fontStyle") || fontStyles[0]
   );
 
-  // Save changes to localStorage
+  // Save changes to localStorage and update UI styles
   useEffect(() => {
+    if (!open) {
+      document.body.style.backgroundColor = selectedBgColor;
+      document.body.style.color = selectedTextColor;
+      document.body.style.fontFamily = selectedFont;
+      document.body.style.fontWeight = selectedFontWeight;
+      document.body.style.fontStyle = selectedFontStyle;
+    }
+
     localStorage.setItem("bgColor", selectedBgColor);
     localStorage.setItem("textColor", selectedTextColor);
     localStorage.setItem("navbarColor", selectedNavbarColor);
@@ -71,6 +84,7 @@ const Customizer = () => {
     localStorage.setItem("fontWeight", selectedFontWeight);
     localStorage.setItem("fontStyle", selectedFontStyle);
   }, [
+    open,
     selectedBgColor,
     selectedTextColor,
     selectedNavbarColor,
@@ -87,11 +101,22 @@ const Customizer = () => {
     >
       {/* Toggle Switch */}
       <div className="p-4 border-b">
-        <ToggleSwitch
-          checked={open}
-          title="Customize Theme"
-          onChange={() => setOpen(!open)}
-        />
+        {!open ? (
+          <ToggleSwitch
+            checked={open}
+            title="Customize Theme"
+            onChange={() => setOpen(true)}
+          />
+        ) : (
+          <ToggleSwitch
+            checked={open}
+            title="Customize Theme"
+            onChange={() => {
+              setOpen(false);
+              ReloadPage();
+            }}
+          />
+        )}
       </div>
 
       {/* Customizer Panel */}
@@ -104,7 +129,11 @@ const Customizer = () => {
               {bgColors.map((bg, i) => (
                 <div
                   key={i}
-                  className="h-[50px] w-full rounded-lg border cursor-pointer"
+                  className={`h-[50px] w-full rounded-lg border cursor-pointer ${
+                    selectedBgColor === bg
+                      ? "border-black"
+                      : "border-transparent"
+                  }`}
                   style={{ backgroundColor: bg }}
                   onClick={() => setSelectedBgColor(bg)}
                 ></div>
@@ -119,7 +148,11 @@ const Customizer = () => {
               {textColors.map((color, i) => (
                 <div
                   key={i}
-                  className="h-[50px] w-full rounded-lg border cursor-pointer flex items-center justify-center"
+                  className={`h-[50px] flex items-center justify-center w-full rounded-lg border cursor-pointer ${
+                    selectedTextColor === color
+                      ? "border-black"
+                      : "border-transparent"
+                  }`}
                   style={{ backgroundColor: color }}
                   onClick={() => setSelectedTextColor(color)}
                 >
@@ -140,7 +173,11 @@ const Customizer = () => {
               {navbarColors.map((color, i) => (
                 <div
                   key={i}
-                  className="h-[50px] w-full rounded-lg border cursor-pointer"
+                  className={`h-[50px] w-full rounded-lg border cursor-pointer ${
+                    selectedNavbarColor === color
+                      ? "border-black"
+                      : "border-transparent"
+                  }`}
                   style={{ backgroundColor: color }}
                   onClick={() => setSelectedNavbarColor(color)}
                 ></div>
