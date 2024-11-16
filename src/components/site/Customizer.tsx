@@ -50,7 +50,7 @@ const Customizer = () => {
     localStorage.getItem("textColor") || "#000000"
   );
   const [selectedNavbarColor, setSelectedNavbarColor] = useState<string>(
-    localStorage.getItem("navbarColor") || "#343A40"
+    localStorage.getItem("navbarColor") || "#ffffff"
   );
   const [selectedFont, setSelectedFont] = useState<string>(
     localStorage.getItem("fontFamily") || fonts[0]

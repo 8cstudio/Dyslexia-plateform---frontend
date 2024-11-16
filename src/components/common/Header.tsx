@@ -56,7 +56,7 @@ function Header() {
           </Navbar.Link>
           <Link to="/dashboard/chat">My Chat</Link>
           <Navbar.Link href="/dashboard/tasks">Tasks</Navbar.Link>
-          <Navbar.Link href="/dashboard/tasks">Text to Speech</Navbar.Link>
+          <Navbar.Link href="/dashboard/reader">Text to Speech</Navbar.Link>
           <Navbar.Link href="/dashboard/contact">Contact</Navbar.Link>
         </Navbar.Collapse>
       </Navbar>
