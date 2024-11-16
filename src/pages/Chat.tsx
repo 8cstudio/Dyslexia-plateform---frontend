@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Paperclip, Send } from "lucide-react";
 import { Avatar } from "flowbite-react";
 

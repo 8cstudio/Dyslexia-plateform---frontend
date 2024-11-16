@@ -6,7 +6,7 @@ import mammoth from "mammoth";
 const TextToSpeech = () => {
   const [fileContent, setFileContent] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [synth, setSynth] = useState(window.speechSynthesis);
+  const [synth, setSynth] = useState(window.speechSynthesis || null);
   const [utterance, setUtterance] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Track loading state
   const [error, setError] = useState(""); // Track error message
