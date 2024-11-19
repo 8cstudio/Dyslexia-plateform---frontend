@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Paperclip, Send } from "lucide-react";
 import { Avatar } from "flowbite-react";
-
+import { io } from "socket.io-client";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { getChats } from "../redux/chatSlice";
 const Chat = () => {
+  const socket = io("http://localhost:4000");
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageInput, setMessageInput] = useState("");
+  const { chats } = useSelector((state) => state?.chat);
 
   const usersAndGroups = [
     {
@@ -54,45 +59,73 @@ const Chat = () => {
     },
   ];
 
+  const { token, user } = useSelector((state) => state?.auth);
+
+  console.log("user", user);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getChats());
+  }, []);
+
+  useEffect(() => {
+    socket.on("connection", (conn: any) => {
+      console.log("connected", conn);
+    });
+  }, [socket]);
   const handleSendMessage = () => {
     if (messageInput.trim()) {
       setMessageInput("");
     }
   };
 
+  console.log("chats", chats, "current user", user);
   return (
     <div className="flex h-screen bg-white">
       {/* Sidebar */}
-      <aside className="w-1/4 bg-white border p-4">
+      <aside className="w-1/4 bg-white border p-4 overflow-auto">
         <input
           type="text"
           placeholder="Search"
           className="w-full p-2 rounded-md border border-gray-300  focus:outline-none focus:border-blue-500 mb-4"
         />
         <div className="space-y-4">
-          {usersAndGroups.map((user: any) => (
+          {chats?.map((chat: any) => (
             <div
-              key={user.id}
-              onClick={() => setSelectedChat(user.name)}
+              key={chat._id}
+              onClick={() => setSelectedChat(chat._id)}
               className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition ${
-                selectedChat === user.name ? "bg-blue-100" : "hover:bg-gray-100"
+                selectedChat === chat._id ? "bg-blue-100" : "hover:bg-gray-100"
               }`}
             >
               <Avatar img="https://via.placeholder.com/40" rounded={true} />
               <div className="flex-1">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">{user.name}</span>
-                  <span className="text-xs text-gray-500">{user.time}</span>
+                  {chat?.isGroupChat ? (
+                    <span className="font-semibold">{chat.groupName}</span>
+                  ) : (
+                    chat.participants
+                      ?.filter((participant: any) => {
+                        return participant._id !== user._id;
+                      }) // Exclude the current user
+                      .map((otherUser: any) => (
+                        <span key={otherUser._id} className="font-semibold">
+                          {otherUser.username}
+                        </span>
+                      ))
+                  )}
+                  <span className="text-xs text-gray-500">{"2:14pm"}</span>
                 </div>
+
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-sm">
-                    {user.lastMessage}
+                    {"this is last message"}
                   </span>
                   <span
                     className={`w-3 h-3 rounded-full ${
-                      user.online ? "bg-green-500" : "bg-gray-400"
+                      chat ? "bg-green-500" : "bg-gray-400"
                     }`}
-                    title={user.online ? "Online" : "Offline"}
+                    // title={user.online ? "Online" : "Offline"}
                   ></span>
                 </div>
               </div>

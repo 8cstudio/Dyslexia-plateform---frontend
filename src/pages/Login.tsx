@@ -1,8 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-
+import { LoginUser } from "../api/auth";
+import { useDispatch } from "react-redux";
+import { getToken, setUserDetails } from "../redux/authSlice";
 function Login() {
+  const nav = useNavigate();
+  const dispatch = useDispatch();
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -18,9 +22,17 @@ function Login() {
         .min(8, "Password must be at least 8 characters")
         .required("Password is required"),
     }),
-    onSubmit: (values) => {
+    onSubmit: async (values: any) => {
       console.log("Form data", values);
-      // Add form submission logic here
+      const resp = await LoginUser(values);
+      console.log("responxe ", resp);
+      if (resp) {
+        alert(resp?.message);
+
+        dispatch(getToken(resp?.token));
+        dispatch(setUserDetails(resp?.user));
+        nav("/dashboard");
+      }
     },
   });
 
@@ -97,7 +109,7 @@ function Login() {
               type="submit"
               className="w-full mt-4 py-2 text-lg font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring focus:ring-indigo-300"
             >
-              Register
+              login
             </button>
             <p className="text-center text-sm text-gray-700 mt-4">
               Dont't have an account?{" "}

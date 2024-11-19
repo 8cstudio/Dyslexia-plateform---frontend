@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-
+import { RegisterUser } from "../api/auth";
+// import { RegisterUser } from "../api/auth";
 function Register() {
+  const navigate = useNavigate();
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -28,9 +30,13 @@ function Register() {
         .oneOf([Yup.ref("password")], "Passwords must match")
         .required("Confirm Password is required"),
     }),
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       console.log("Form data", values);
-      // Add form submission logic here
+      const resp = await RegisterUser(values);
+
+      alert(resp.message);
+
+      navigate("/login");
     },
   });
 

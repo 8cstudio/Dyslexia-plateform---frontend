@@ -110,6 +110,7 @@ const Customizer = () => {
         ) : (
           <ToggleSwitch
             checked={open}
+            
             title="Customize Theme"
             onChange={() => {
               setOpen(false);

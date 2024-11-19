@@ -1,8 +1,11 @@
 import { Avatar, Dropdown, Navbar } from "flowbite-react";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { clearAuth } from "../../redux/authSlice";
 
 function Header() {
   const navbarColor = localStorage.getItem("navbarColor");
+  const dispatch = useDispatch();
   return (
     <div
       className="w-full px-16 shadow"
@@ -46,7 +49,9 @@ function Header() {
             <Dropdown.Item href="/dashboard/profile">Profile</Dropdown.Item>
 
             <Dropdown.Divider />
-            <Dropdown.Item>Sign out</Dropdown.Item>
+            <Dropdown.Item onClick={() => dispatch(clearAuth())}>
+              Sign out
+            </Dropdown.Item>
           </Dropdown>
           <Navbar.Toggle />
         </div>
