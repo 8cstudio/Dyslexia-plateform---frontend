@@ -14,7 +14,7 @@ const token = localStorage.getItem("token");
 // Async thunk to fetch chats
 export const getChats = createAsyncThunk(
   "chat/getChats",
-  async ({}, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
       const resp = await axios.get("/chat/chats", {
         headers: {
@@ -27,41 +27,6 @@ export const getChats = createAsyncThunk(
     }
   }
 );
-
-// Async thunk to create a chat
-// export const createChat = createAsyncThunk(
-//   "chat/createChat",
-//   async (chatData: { groupName: string; participants: any[] }, thunkAPI) => {
-//     try {
-//       const response = await axios.post("/api/chats", chatData, {
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-//       return response.data; // Return new chat data
-//     } catch (error: any) {
-//       return thunkAPI.rejectWithValue(error.response?.data || error.message);
-//     }
-//   }
-// );
-
-// // Async thunk to delete a chat
-// export const deleteChat = createAsyncThunk(
-//   "chat/deleteChat",
-//   async (chatId: string, thunkAPI) => {
-//     try {
-//       await axios.delete(`/api/chats/${chatId}`, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-//       return chatId; // Return the chatId to remove from the list
-//     } catch (error: any) {
-//       return thunkAPI.rejectWithValue(error.response?.data || error.message);
-//     }
-//   }
-// );
 
 const chatSlice = createSlice({
   name: "chat",

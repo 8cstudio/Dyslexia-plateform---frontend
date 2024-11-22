@@ -1,11 +1,12 @@
 import { Avatar, Dropdown, Navbar } from "flowbite-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { clearAuth } from "../../redux/authSlice";
 
 function Header() {
   const navbarColor = localStorage.getItem("navbarColor");
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   return (
     <div
       className="w-full px-16 shadow"
@@ -40,9 +41,9 @@ function Header() {
             }
           >
             <Dropdown.Header>
-              <span className="block text-sm">James Herichson</span>
+              <span className="block text-sm">{user.username}</span>
               <span className="block truncate text-sm font-medium">
-                james889@gmail.com
+                {user?.email}
               </span>
             </Dropdown.Header>
             <Dropdown.Item href="/dashboard">Dashboard</Dropdown.Item>

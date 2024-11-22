@@ -2,9 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { RegisterUser } from "../api/auth";
+import usePost from "../customHooks/usePost";
+import toast from "react-hot-toast";
 // import { RegisterUser } from "../api/auth";
 function Register() {
   const navigate = useNavigate();
+  const { loading, PostData } = usePost("/auth/register/");
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -32,11 +35,12 @@ function Register() {
     }),
     onSubmit: async (values) => {
       console.log("Form data", values);
-      const resp = await RegisterUser(values);
+      const resp = await PostData(values);
 
-      alert(resp.message);
-
-      navigate("/login");
+      if (resp) {
+        toast.success(resp?.message);
+        navigate("/login");
+      }
     },
   });
 
@@ -213,9 +217,18 @@ function Register() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full mt-4 py-2 text-lg font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring focus:ring-indigo-300"
+              disabled={loading}
+              className={`w-full mt-4 py-2 flex justify-center items-center text-lg font-semibold ${
+                loading
+                  ? "bg-gray-100"
+                  : "text-white bg-indigo-600  hover:bg-indigo-700 "
+              } rounded-md focus:outline-none focus:ring focus:ring-indigo-300`}
             >
-              Register
+              {loading ? (
+                <Loader className="animate-spin text-gray-500" />
+              ) : (
+                "Register"
+              )}
             </button>
             <p className="text-center text-sm text-gray-700 mt-4">
               Already have an account?{" "}

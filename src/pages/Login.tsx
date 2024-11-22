@@ -4,9 +4,13 @@ import * as Yup from "yup";
 import { LoginUser } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { getToken, setUserDetails } from "../redux/authSlice";
+import usePost from "../customHooks/usePost";
+import { Loader } from "lucide-react";
+import toast from "react-hot-toast";
 function Login() {
   const nav = useNavigate();
   const dispatch = useDispatch();
+  const { loading, PostData } = usePost("/auth/login/");
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -24,10 +28,11 @@ function Login() {
     }),
     onSubmit: async (values: any) => {
       console.log("Form data", values);
-      const resp = await LoginUser(values);
+      // const resp = await LoginUser(values);
+      const resp = await PostData(values);
       console.log("responxe ", resp);
       if (resp) {
-        alert(resp?.message);
+        toast.success(resp?.message);
 
         dispatch(getToken(resp?.token));
         dispatch(setUserDetails(resp?.user));
@@ -99,7 +104,7 @@ function Login() {
               />
               {formik.touched.password && formik.errors.password && (
                 <div className="text-red-500 text-sm">
-                  {formik.errors.password}
+                  {formik?.errors?.password}
                 </div>
               )}
             </div>
@@ -107,9 +112,18 @@ function Login() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full mt-4 py-2 text-lg font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring focus:ring-indigo-300"
+              disabled={loading}
+              className={`w-full mt-4 py-2 flex justify-center items-center text-lg font-semibold ${
+                loading
+                  ? "bg-gray-100"
+                  : "text-white bg-indigo-600  hover:bg-indigo-700 "
+              } rounded-md focus:outline-none focus:ring focus:ring-indigo-300`}
             >
-              login
+              {loading ? (
+                <Loader className="animate-spin text-gray-500" />
+              ) : (
+                "Login"
+              )}
             </button>
             <p className="text-center text-sm text-gray-700 mt-4">
               Dont't have an account?{" "}
