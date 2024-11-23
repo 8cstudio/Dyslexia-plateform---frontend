@@ -2,14 +2,18 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const usePost = <T = any>(url: string) => {
+const PostFeedback = <T = any>(url: string, token: string) => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const PostData = async (data: any): Promise<T | undefined> => {
     try {
       setLoading(true);
 
-      const response = await axios.post<T>(url, data);
+      const response = await axios.post<T>(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       return response.data;
     } catch (error: unknown) {
@@ -27,4 +31,4 @@ const usePost = <T = any>(url: string) => {
   return { loading, PostData };
 };
 
-export default usePost;
+export default PostFeedback;

@@ -2,14 +2,18 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const usePost = <T = any>(url: string) => {
+const useDelete = <T = any>(url: string, token: string) => {
   const [loading, setLoading] = useState<boolean>(false);
 
-  const PostData = async (data: any): Promise<T | undefined> => {
+  const deleteData = async (): Promise<T | undefined> => {
     try {
       setLoading(true);
 
-      const response = await axios.post<T>(url, data);
+      const response = await axios.delete<T>(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       return response.data;
     } catch (error: unknown) {
@@ -24,7 +28,7 @@ const usePost = <T = any>(url: string) => {
     }
   };
 
-  return { loading, PostData };
+  return { loading, deleteData };
 };
 
-export default usePost;
+export default useDelete;

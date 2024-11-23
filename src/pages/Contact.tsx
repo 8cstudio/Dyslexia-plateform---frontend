@@ -1,5 +1,8 @@
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Send } from "lucide-react";
+import { Loader, Send } from "lucide-react";
+import PostFeedback from "../customHooks/PostFeedback";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 interface FormData {
   rating: number;
@@ -12,6 +15,8 @@ const Feedback = () => {
     message: "",
   });
 
+  const { token } = useSelector((state: any) => state?.auth);
+  const { loading, PostData } = PostFeedback("/feedback/", token);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
@@ -33,7 +38,7 @@ const Feedback = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const { rating, message } = formData;
@@ -44,10 +49,15 @@ const Feedback = () => {
       return;
     }
 
+    const resp = await PostData({ message, rating });
+
     // Success message
-    setSuccessMessage("Thank you for your feedback!");
-    setErrorMessage("");
-    setFormData({ rating: 0, message: "" });
+    if (resp) {
+      setSuccessMessage("Thank you for your feedback!");
+      setErrorMessage("");
+      setFormData({ rating: 0, message: "" });
+      toast.success(resp?.message);
+    }
   };
 
   return (
@@ -122,10 +132,21 @@ const Feedback = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="flex items-center justify-center w-full py-2 mt-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            disabled={loading}
+            className={`w-full mt-4 py-2 flex justify-center items-center text-lg font-semibold ${
+              loading
+                ? "bg-gray-100"
+                : "text-white bg-indigo-600  hover:bg-indigo-700 "
+            } rounded-md focus:outline-none focus:ring focus:ring-indigo-300`}
           >
-            <Send size={16} className="mr-2" />
-            Submit Feedback
+            {loading ? (
+              <Loader className="animate-spin" />
+            ) : (
+              <>
+                <Send size={16} className="mr-2" />
+                Submit Feedback
+              </>
+            )}
           </button>
         </form>
       </div>
