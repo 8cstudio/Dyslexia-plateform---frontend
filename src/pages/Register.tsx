@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { RegisterUser } from "../api/auth";
 import usePost from "../customHooks/usePost";
 import toast from "react-hot-toast";
+import { Loader } from "lucide-react";
 // import { RegisterUser } from "../api/auth";
 function Register() {
   const navigate = useNavigate();

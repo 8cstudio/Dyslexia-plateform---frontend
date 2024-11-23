@@ -1,34 +1,19 @@
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Mail, Phone, Send, Star } from "lucide-react";
+import { Send } from "lucide-react";
 
 interface FormData {
-  name: string;
-  email: string;
   rating: number;
   message: string;
 }
 
-const Contact = () => {
+const Feedback = () => {
   const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
     rating: 0,
     message: "",
   });
 
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-
-  // Handle input change
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
 
   // Handle rating change
   const handleRating = (rating: number) => {
@@ -38,30 +23,41 @@ const Contact = () => {
     }));
   };
 
+  // Handle message change
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
   // Handle form submission
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const { name, email, message } = formData;
+    const { rating, message } = formData;
 
     // Validation check
-    if (!name || !email || !message) {
-      setErrorMessage("Please fill in all required fields.");
+    if (rating === 0 || !message) {
+      setErrorMessage("Please select a rating and provide your feedback.");
       return;
     }
 
     // Success message
     setSuccessMessage("Thank you for your feedback!");
     setErrorMessage("");
-    setFormData({ name: "", email: "", rating: 0, message: "" });
+    setFormData({ rating: 0, message: "" });
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg">
-        <h2 className="text-2xl font-semibold text-center mb-4">Contact Us</h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
+      <div className="max-w-lg w-full bg-white p-8 rounded-lg shadow-lg">
+        <h2 className="text-2xl font-semibold text-center mb-4">
+          We Value Your Feedback
+        </h2>
         <p className="text-gray-600 text-center mb-6">
-          We value your feedback! Please let us know how we can improve.
+          Let us know how we can improve!
         </p>
 
         {/* Success/Error Messages */}
@@ -74,56 +70,31 @@ const Contact = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-gray-700 font-medium">
-              Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full p-2 mt-1 border rounded-lg"
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-gray-700 font-medium">
-              Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-2 mt-1 border rounded-lg"
-              required
-            />
-          </div>
-
           {/* Rating */}
           <div>
             <label className="block text-gray-700 font-medium">
-              Rate Our Website
+              How do you feel about our platform?
             </label>
-            <div className="flex items-center space-x-1 mt-1">
-              {[1, 2, 3, 4, 5].map((star) => (
+            <div className="flex items-center justify-center space-x-4 mt-4">
+              {[
+                { emoji: "😢", label: "Sad", value: 1 },
+                { emoji: "😐", label: "Neutral", value: 2 },
+                { emoji: "🙂", label: "Happy", value: 3 },
+                { emoji: "😃", label: "Excited", value: 4 },
+                { emoji: "😍", label: "Loved it", value: 5 },
+              ].map((item) => (
                 <button
-                  key={star}
+                  key={item.value}
                   type="button"
-                  onClick={() => handleRating(star)}
-                  className={`${
-                    formData.rating >= star
-                      ? "text-yellow-500"
-                      : "text-gray-400"
-                  }`}
+                  onClick={() => handleRating(item.value)}
+                  className={`flex flex-col items-center p-3 border rounded-lg transition ${
+                    formData.rating === item.value
+                      ? "bg-blue-100 border-blue-500"
+                      : "border-gray-300"
+                  } hover:scale-105`}
                 >
-                  <Star size={20} />
+                  <span className="text-2xl">{item.emoji}</span>
+                  <span className="text-sm text-gray-600">{item.label}</span>
                 </button>
               ))}
             </div>
@@ -157,23 +128,9 @@ const Contact = () => {
             Submit Feedback
           </button>
         </form>
-
-        {/* Contact Info */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600">Or reach us directly at:</p>
-          <div className="flex items-center justify-center space-x-4 mt-2">
-            <a href="mailto:support@example.com" className="flex items-center">
-              <Mail size={20} className="mr-1" /> support@example.com
-            </a>
-            <span>|</span>
-            <a href="tel:+1234567890" className="flex items-center">
-              <Phone size={20} className="mr-1" /> +1 234 567 890
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
-export default Contact;
+export default Feedback;

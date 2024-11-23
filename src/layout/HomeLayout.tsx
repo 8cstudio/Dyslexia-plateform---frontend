@@ -1,6 +1,7 @@
 import Header from "../components/common/Header";
 import { Outlet } from "react-router-dom";
 import Customizer from "../components/site/Customizer";
+import Footer from "../components/common/Footer";
 
 const HomeLayout = () => {
   const fontFamily = localStorage.getItem("fontFamily");
@@ -27,6 +28,7 @@ const HomeLayout = () => {
         <main className="w-full lg:w-[90%]   mx-auto  p-5">
           <Outlet />
         </main>
+        <Footer />
       </div>
     </>
   );
