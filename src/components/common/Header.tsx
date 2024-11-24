@@ -35,7 +35,11 @@ function Header() {
             label={
               <Avatar
                 alt="User settings"
-                img="https://tse2.mm.bing.net/th?id=OIP.gxCrcJ9wcnuS-hppF4l8ggHaHa&pid=Api&P=0&h=220"
+                img={
+                  user?.profile_pic
+                    ? user?.profile_pic
+                    : "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI="
+                }
                 rounded
               />
             }
@@ -60,7 +64,7 @@ function Header() {
           <Navbar.Link href="/dashboard" active>
             Home
           </Navbar.Link>
-          <Link to="/dashboard/chat">My Chat</Link>
+          <Navbar.Link href="/dashboard/chat">My Chat</Navbar.Link>
           <Navbar.Link href="/dashboard/tasks">Tasks</Navbar.Link>
           <Navbar.Link href="/dashboard/reader">Text to Speech</Navbar.Link>
           <Navbar.Link href="/dashboard/contact">Contact</Navbar.Link>

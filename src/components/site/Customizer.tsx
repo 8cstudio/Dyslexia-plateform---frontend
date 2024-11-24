@@ -49,7 +49,7 @@ const Customizer = () => {
 
   const [open, setOpen] = useState<boolean>(false);
   const [selectedBgColor, setSelectedBgColor] = useState<string>(
-    localStorage.getItem("bgColor") || "#D8BFD8"
+    localStorage.getItem("bgColor") || "#F8F9FA"
   );
   const [selectedTextColor, setSelectedTextColor] = useState<string>(
     localStorage.getItem("textColor") || "#000000"
@@ -57,6 +57,7 @@ const Customizer = () => {
   const [selectedNavbarColor, setSelectedNavbarColor] = useState<string>(
     localStorage.getItem("navbarColor") || "#ffffff"
   );
+
   const [selectedFont, setSelectedFont] = useState<string>(
     localStorage.getItem("fontFamily") || fonts[0]
   );
@@ -67,6 +68,17 @@ const Customizer = () => {
     localStorage.getItem("fontStyle") || fontStyles[0]
   );
 
+  const [selectedLineHeight, setSelectedLineHeight] = useState<string>(
+    localStorage.getItem("lineHeight") || ""
+  );
+
+  const [selectedWordSpacing, setSelectedWordSpacing] = useState<string>(
+    localStorage.getItem("wordSpacing") || ""
+  );
+
+  const [selectedLetterSpacing, setSelectedLetterSpacing] = useState<string>(
+    localStorage.getItem("letterSpacing") || ""
+  );
   // Save changes to localStorage and update UI styles
   useEffect(() => {
     if (!open) {
@@ -75,6 +87,9 @@ const Customizer = () => {
       document.body.style.fontFamily = selectedFont;
       document.body.style.fontWeight = selectedFontWeight;
       document.body.style.fontStyle = selectedFontStyle;
+      document.body.style.lineHeight = selectedLineHeight;
+      document.body.style.wordSpacing = selectedWordSpacing;
+      document.body.style.letterSpacing = selectedLetterSpacing;
     }
 
     localStorage.setItem("bgColor", selectedBgColor);
@@ -83,6 +98,9 @@ const Customizer = () => {
     localStorage.setItem("fontFamily", selectedFont);
     localStorage.setItem("fontWeight", selectedFontWeight);
     localStorage.setItem("fontStyle", selectedFontStyle);
+    localStorage.setItem("lineHeight", selectedLineHeight);
+    localStorage.setItem("letterSpacing", selectedLetterSpacing);
+    localStorage.setItem("wordSpacing", selectedWordSpacing);
   }, [
     open,
     selectedBgColor,
@@ -91,6 +109,9 @@ const Customizer = () => {
     selectedFont,
     selectedFontWeight,
     selectedFontStyle,
+    selectedWordSpacing,
+    selectedLetterSpacing,
+    selectedLineHeight,
   ]);
 
   return (
@@ -110,7 +131,6 @@ const Customizer = () => {
         ) : (
           <ToggleSwitch
             checked={open}
-            
             title="Customize Theme"
             onChange={() => {
               setOpen(false);
@@ -229,6 +249,51 @@ const Customizer = () => {
               {fontStyles.map((style, i) => (
                 <option key={i} value={style}>
                   {style.charAt(0).toUpperCase() + style.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Line Height</h3>
+            <select
+              value={selectedLineHeight}
+              onChange={(e) => setSelectedLineHeight(e.target.value)}
+              className="w-full border rounded-lg p-2"
+            >
+              {[10, 20, 30, 40].map((style, i) => (
+                <option key={i} value={style}>
+                  {style}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Word Spacing</h3>
+            <select
+              value={selectedWordSpacing}
+              onChange={(e) => setSelectedWordSpacing(e.target.value)}
+              className="w-full border rounded-lg p-2"
+            >
+              {[2, 4, 5, 7, 10].map((style, i) => (
+                <option key={i} value={style}>
+                  {style}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Letter Spacing</h3>
+            <select
+              value={selectedLetterSpacing}
+              onChange={(e) => setSelectedLetterSpacing(e.target.value)}
+              className="w-full border rounded-lg p-2"
+            >
+              {[1, 2, 3, 4, 5].map((style, i) => (
+                <option key={i} value={style}>
+                  {i + 1}
                 </option>
               ))}
             </select>

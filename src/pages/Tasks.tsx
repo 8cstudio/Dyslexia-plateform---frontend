@@ -197,19 +197,13 @@ const TaskManagementPage = () => {
                   key={task._id}
                   className={`bg-white border-b dark:bg-gray-900 dark:border-gray-700 ${
                     colors[index % colors.length]
-                  } ${task.status === "Completed" ? "opacity-75" : ""}`}
+                  }`}
                 >
                   <td className="px-6 py-4">{task.title}</td>
-                  <td className="px-6 py-4">{task.deadline}</td>
                   <td className="px-6 py-4">
-                    {task.status === "Completed" ? (
-                      <span className="text-green-600 font-semibold">
-                        Completed
-                      </span>
-                    ) : (
-                      task.status
-                    )}
+                    {new Date(task.deadline).toDateString()}
                   </td>
+                  <td className="px-6 py-4">{task.status}</td>
                   <td className="px-6 py-4">
                     <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5">
                       <div
@@ -235,7 +229,7 @@ const TaskManagementPage = () => {
                         <button
                           onClick={() => {
                             setTaskToComplete(task._id);
-                            handleMarkAsComplete(task._id); // Function to mark task as complete
+                            setShowCompletionModal(true);
                           }}
                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                         >
@@ -258,10 +252,8 @@ const TaskManagementPage = () => {
                         <span className="p-2 px-4 border bg-green-500 rounded-full text-white text-sm font-semibold shadow-lg transform hover:scale-105 transition duration-300">
                           Completed
                         </span>
-                        <button
-                          onClick={() => handleUndoCompletion(task._id)} // Function to undo completion
-                          className="px-2 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
-                        >
+
+                        <button className="px-2 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors">
                           Undo
                         </button>
                       </div>

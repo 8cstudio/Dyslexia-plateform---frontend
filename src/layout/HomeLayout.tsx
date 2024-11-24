@@ -9,6 +9,9 @@ const HomeLayout = () => {
   const textColor = localStorage.getItem("textColor");
   const weight = localStorage.getItem("fontWeight");
   const fontStyle = localStorage.getItem("fontStyle");
+  const letter = localStorage.getItem("letterSpacing");
+  const word = localStorage.getItem("wordSpacing");
+  const line = localStorage.getItem("lineHeight");
   return (
     <>
       <div
@@ -19,6 +22,9 @@ const HomeLayout = () => {
           color: `${textColor}`,
           fontWeight: `${weight}`,
           fontStyle: `${fontStyle}`,
+          wordSpacing: `${word}px`,
+          letterSpacing: `${letter}px`,
+          lineHeight: `${line}px`,
         }}
       >
         <Header />
