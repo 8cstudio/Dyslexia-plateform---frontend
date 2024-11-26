@@ -68,9 +68,9 @@ const Customizer = () => {
     localStorage.getItem("fontStyle") || fontStyles[0]
   );
 
-  const [selectedLineHeight, setSelectedLineHeight] = useState<string>(
-    localStorage.getItem("lineHeight") || ""
-  );
+  // const [selectedLineHeight, setSelectedLineHeight] = useState<string>(
+  //   localStorage.getItem("lineHeight") || ""
+  // );
 
   const [selectedWordSpacing, setSelectedWordSpacing] = useState<string>(
     localStorage.getItem("wordSpacing") || ""
@@ -87,9 +87,9 @@ const Customizer = () => {
       document.body.style.fontFamily = selectedFont;
       document.body.style.fontWeight = selectedFontWeight;
       document.body.style.fontStyle = selectedFontStyle;
-      document.body.style.lineHeight = selectedLineHeight;
-      document.body.style.wordSpacing = selectedWordSpacing;
-      document.body.style.letterSpacing = selectedLetterSpacing;
+
+      // document.body.style.wordSpacing = selectedWordSpacing;
+      // document.body.style.letterSpacing = selectedLetterSpacing;
     }
 
     localStorage.setItem("bgColor", selectedBgColor);
@@ -98,7 +98,7 @@ const Customizer = () => {
     localStorage.setItem("fontFamily", selectedFont);
     localStorage.setItem("fontWeight", selectedFontWeight);
     localStorage.setItem("fontStyle", selectedFontStyle);
-    localStorage.setItem("lineHeight", selectedLineHeight);
+    // localStorage.setItem("lineHeight", selectedLineHeight);
     localStorage.setItem("letterSpacing", selectedLetterSpacing);
     localStorage.setItem("wordSpacing", selectedWordSpacing);
   }, [
@@ -111,7 +111,7 @@ const Customizer = () => {
     selectedFontStyle,
     selectedWordSpacing,
     selectedLetterSpacing,
-    selectedLineHeight,
+    // selectedLineHeight,
   ]);
 
   return (
@@ -254,7 +254,7 @@ const Customizer = () => {
             </select>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <h3 className="text-lg font-semibold">Line Height</h3>
             <select
               value={selectedLineHeight}
@@ -267,7 +267,7 @@ const Customizer = () => {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">Word Spacing</h3>

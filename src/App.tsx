@@ -9,17 +9,26 @@ import Contact from "./pages/Contact";
 import TextToSpeech from "./pages/Reader";
 import Home from "./pages/Home";
 import { useSelector } from "react-redux";
+import React from "react";
+import Dashboard from "./pages/Dashboard";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ children }) => {
-  const { token } = useSelector((state) => state?.auth);
+  const { token } = useSelector((state: any) => state?.auth);
 
   // Redirect to login if no token is present
   return token ? children : <Navigate to="/login" />;
 };
 
+const AdminRoute = ({ children }) => {
+  const { token, user } = useSelector((state: any) => state?.auth);
+
+  // Redirect to login if no token is present
+  return token && user?.role === "admin" ? children : <Navigate to="/home" />;
+};
+
 const App = () => {
-  const { token, user } = useSelector((state) => state?.auth);
+  const { token, user } = useSelector((state: any) => state?.auth);
 
   console.log("token", token, "user", user);
 
@@ -28,16 +37,16 @@ const App = () => {
       {/* Public Routes */}
       <Route
         path="/"
-        element={!token ? <Register /> : <Navigate to={"/dashboard"} />}
+        element={!token ? <Register /> : <Navigate to={"/home"} />}
       />
       <Route
         path="/login"
-        element={!token ? <Login /> : <Navigate to={"/dashboard"} />}
+        element={!token ? <Login /> : <Navigate to={"/home"} />}
       />
 
       {/* Protected Routes */}
       <Route
-        path="/dashboard"
+        path="/home"
         element={
           <ProtectedRoute>
             <HomeLayout />
@@ -98,6 +107,15 @@ const App = () => {
             <ProtectedRoute>
               <TextToSpeech />
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard"
+          element={
+            <AdminRoute>
+              <Dashboard />
+            </AdminRoute>
           }
         />
       </Route>

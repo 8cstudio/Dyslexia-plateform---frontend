@@ -135,30 +135,32 @@ const TaskManagementPage = () => {
     "bg-pink-100",
     "bg-teal-100",
   ];
-
+  const textColor = localStorage.getItem("textColor");
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6" style={{ color: `${textColor}` }}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Task Management</h1>
         <button
           onClick={() => setShowAddTaskModal(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Add Task
         </button>
       </div>
 
       {/* Overall Progress Bar */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Overall Progress</h2>
-        <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5">
-          <div
-            className="h-2.5 bg-green-500 rounded-full"
-            style={{ width: `${overallProgress}%` }}
-          ></div>
+      {tasks.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Overall Progress</h2>
+          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5">
+            <div
+              className="h-2.5 bg-green-500 rounded-full"
+              style={{ width: `${overallProgress}%` }}
+            ></div>
+          </div>
+          <span className="ml-2 text-sm">{overallProgress.toFixed(2)}%</span>
         </div>
-        <span className="ml-2 text-sm">{overallProgress.toFixed(2)}%</span>
-      </div>
+      )}
 
       {/* Task List */}
       {tasks.length < 1 && (
@@ -179,10 +181,16 @@ const TaskManagementPage = () => {
         </div>
       )}
 
-      {tasks && (
+      {tasks && tasks.length > 0 && (
         <div className="overflow-x-auto shadow-md sm:rounded-lg w-full">
-          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-400">
+          <table
+            className="w-full text-sm text-left text-gray-500 dark:text-gray-400"
+            // style={{ color: `${textColor}` }}
+          >
+            <thead
+              // style={{ color: `${textColor}` }}
+              className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-400"
+            >
               <tr>
                 <th className="px-6 py-3">Title</th>
                 <th className="px-6 py-3">Deadline</th>
@@ -267,32 +275,52 @@ const TaskManagementPage = () => {
       )}
 
       {/* Modals */}
-      <Modal show={showAddTaskModal} onClose={() => setShowAddTaskModal(false)}>
-        <Modal.Header>Add New Task</Modal.Header>
-        <Modal.Body>
-          <input
-            type="text"
-            className="w-full p-2 mb-4 border rounded-lg"
-            placeholder="Task Title"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-          />
-          <input
-            type="date"
-            className="w-full p-2 mb-4 border rounded-lg"
-            value={newTaskDeadline}
-            onChange={(e) => setNewTaskDeadline(e.target.value)}
-          />
+      <Modal
+        style={{ color: `${textColor}` }}
+        show={showAddTaskModal}
+        size="lg"
+        onClose={() => setShowAddTaskModal(false)}
+      >
+        <Modal.Header
+          style={{ color: `${textColor}` }}
+          className="bg-blue-100 text-blue-800 font-semibold text-lg rounded-t-lg"
+        >
+          Add New Task
+        </Modal.Header>
+        <Modal.Body className="p-6 bg-gray-50 space-y-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Task Title
+            </label>
+            <input
+              type="text"
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter task title"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Deadline
+            </label>
+            <input
+              type="date"
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={newTaskDeadline}
+              onChange={(e) => setNewTaskDeadline(e.target.value)}
+            />
+          </div>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="flex items-center justify-end p-4 bg-gray-100 rounded-b-lg">
           <button
             onClick={handleAddTask}
             disabled={loading}
-            className={`px-4 py-2 ${
+            className={`px-6 py-3 font-medium rounded-lg ${
               loading
-                ? "bg-gray-200"
-                : "bg-blue-500 text-white hover:bg-blue-700"
-            } rounded-lg`}
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            } shadow-sm transition-colors`}
           >
             {loading ? <Loader className="animate-spin" /> : "Add Task"}
           </button>
@@ -320,6 +348,7 @@ const TaskManagementPage = () => {
       </Modal>
 
       <Modal
+        size="lg"
         show={showCompletionModal}
         onClose={() => setShowCompletionModal(false)}
       >

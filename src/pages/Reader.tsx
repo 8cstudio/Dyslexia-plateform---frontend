@@ -143,6 +143,7 @@ const TextToSpeech: React.FC = () => {
     setIsLoading(false);
     setError("");
   };
+  const textColor = localStorage.getItem("textColor");
 
   return (
     <div className="min-h-screen">
@@ -150,7 +151,10 @@ const TextToSpeech: React.FC = () => {
         <h2 className="text-2xl font-semibold text-center mb-4">
           Text to Speech
         </h2>
-        <p className="text-gray-600 text-center mb-6">
+        <p
+          className="text-gray-600 text-center mb-6"
+          style={{ color: `${textColor}` }}
+        >
           Upload a Word or PDF document, preview its content, and convert it to
           speech.
         </p>

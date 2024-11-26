@@ -1,34 +1,82 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Modal, Avatar } from "flowbite-react";
+import { Button, Modal, Avatar, TextInput } from "flowbite-react";
 import { Paperclip, PlusCircle, Send } from "lucide-react";
 import { getChats } from "../redux/chatSlice";
+import { HiUserGroup } from "react-icons/hi";
 
 const socket = io("http://localhost:4000", { autoConnect: false });
 
 const Chat = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [messages, setMessages] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isPending, setIsPending] = useState(false);
 
-  const { token, user } = useSelector((state: any) => state?.auth);
+  const { token, user } = useSelector((state: any) => state.auth);
   const { chats } = useSelector((state: any) => state.chat);
+  const [groupName, setGroupName] = useState("");
 
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const dispatch = useDispatch();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleAddUser = async () => {
+    try {
+      const resp = await axios.post("/user/add", newUser, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers((prev) => [...prev, resp.data.user]);
+      setNewUser({ username: "", email: "" });
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
+  };
+
+  // Create new group
+  const handleCreateGroup = async () => {
+    try {
+      const resp = await axios.post(
+        "/group/create",
+        { name: groupName, members: selectedUsers },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch(getChats()); // Refresh chats list
+      setGroupName("");
+      setSelectedUsers([]);
+      setIsGroupModalOpen(false);
+    } catch (error) {
+      console.error("Error creating group:", error);
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch all users
   const getALLUsers = async () => {
     try {
       const resp = await axios.get("/user/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(resp?.data?.users);
     } catch (error) {
@@ -70,6 +118,8 @@ const Chat = () => {
       socket.disconnect();
     };
   }, []);
+
+  const textColor = localStorage.getItem("textColor");
 
   // Fetch users on component mount
   useEffect(() => {
@@ -162,17 +212,20 @@ const Chat = () => {
                   setSelectedChat(chat._id);
                   setSelectedUser(
                     chat.isGroupChat
-                      ? chat.groupName
+                      ? { username: chat.groupName }
                       : chat.participants.find((p: any) => p._id !== user._id)
                   );
                 }}
                 className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition ${
                   selectedChat === chat._id
-                    ? "bg-blue-100"
+                    ? "bg-blue-50 border-l-4 border-blue-600"
                     : "hover:bg-gray-100"
                 }`}
               >
-                <Avatar img="https://via.placeholder.com/40" rounded />
+                <Avatar
+                  img="https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
+                  rounded
+                />
                 <div className="flex-1">
                   <span className="font-semibold">
                     {chat.isGroupChat
@@ -182,7 +235,11 @@ const Chat = () => {
                           .map((p: any) => p.username)
                           .join(", ")}
                   </span>
+                  <p className="text-[13px] text-gray-500 truncate mt-2">
+                    Last message here...
+                  </p>
                 </div>
+                <span className="text-sm text-gray-400">Online</span>
               </div>
             ))}
           </div>
@@ -190,31 +247,41 @@ const Chat = () => {
         <div className="mt-4">
           <Button
             onClick={() => setIsModalOpen(true)}
-            className="w-full text-white bg-blue-600 hover:bg-blue-700"
+            className="w-full text-white bg-blue-600 hover:bg-blue-700 mb-2"
           >
             <PlusCircle size={20} className="mr-2" />
-            Add User to Contact List
+            Add User
+          </Button>
+          <Button
+            onClick={() => setIsGroupModalOpen(true)}
+            className="w-full text-white bg-green-600 hover:bg-green-700"
+          >
+            <HiUserGroup size={20} className="mr-2" />
+            Create Group
           </Button>
         </div>
       </aside>
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        <div className="h-16 bg-blue-600 text-white flex items-center px-4 shadow-lg">
+        <div className="h-16 bg-green-500 text-white flex items-center px-4 shadow-lg">
           {selectedChat ? (
             <div>
               <h3>{selectedUser?.username || "Group Name"}</h3>
               <p className="text-sm font-medium">Online</p>
             </div>
           ) : (
-            <h2 className="text-xl font-semibold">
+            <h2
+              // style={{ color: `${textColor}` }}
+              className="text-xl font-semibold"
+            >
               Select a chat to start messaging
             </h2>
           )}
         </div>
         <div className="flex-1 p-4 overflow-y-auto bg-white">
           {selectedChat ? (
-            messages?.map((message: any, idx: number) => (
+            messages.map((message: any, idx: number) => (
               <div
                 key={idx}
                 className={`flex ${
@@ -242,6 +309,7 @@ const Chat = () => {
               Select a user or group to view messages.
             </p>
           )}
+          <div ref={messagesEndRef} />
         </div>
         {selectedChat && (
           <div className="h-16 border-t flex items-center px-4 space-x-3 bg-white">
@@ -265,29 +333,48 @@ const Chat = () => {
         )}
       </div>
 
-      {/* Add User Modal */}
       <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Modal.Header>Add User</Modal.Header>
+        <Modal.Header>Add New User</Modal.Header>
         <Modal.Body>
-          {users.map((u: any) => (
-            <div
-              key={u._id}
-              className="flex items-center justify-between py-2 px-4 rounded-md bg-gray-100 mb-2"
-            >
-              <div className="flex items-center space-x-3">
-                <Avatar img="https://via.placeholder.com/40" rounded />
-                <span className="font-semibold">{u.username}</span>
-              </div>
-              <Button
-                onClick={() => addToList(u._id)}
-                size="xs"
-                className="bg-blue-600 text-white"
-              >
-                Add
-              </Button>
-            </div>
-          ))}
+          <TextInput placeholder="Username" />
+          <TextInput placeholder="Email" />
         </Modal.Body>
+        <Modal.Footer>
+          <Button>Add User</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={isGroupModalOpen} onClose={() => setIsGroupModalOpen(false)}>
+        <Modal.Header>Create New Group</Modal.Header>
+        <Modal.Body>
+          <TextInput
+            placeholder="Group Name"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+          />
+          <div>
+            {users.map((u: any) => (
+              <label key={u._id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  value={u._id}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setSelectedUsers((prev) =>
+                      isChecked
+                        ? [...prev, u._id]
+                        : prev.filter((id) => id !== u._id)
+                    );
+                  }}
+                />
+                <span>{u.username}</span>
+              </label>
+            ))}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleCreateGroup}>Create Group</Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
