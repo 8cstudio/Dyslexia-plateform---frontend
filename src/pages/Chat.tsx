@@ -6,6 +6,7 @@ import { Button, Modal, Avatar, TextInput } from "flowbite-react";
 import { Paperclip, PlusCircle, Send } from "lucide-react";
 import { getChats } from "../redux/chatSlice";
 import { HiUserGroup } from "react-icons/hi";
+import toast from "react-hot-toast";
 
 const socket = io("http://localhost:4000", { autoConnect: false });
 
@@ -51,8 +52,8 @@ const Chat = () => {
   const handleCreateGroup = async () => {
     try {
       const resp = await axios.post(
-        "/group/create",
-        { name: groupName, members: selectedUsers },
+        "/chat/create",
+        { groupName, members: selectedUsers, isGroupChat: true },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -63,6 +64,7 @@ const Chat = () => {
       setGroupName("");
       setSelectedUsers([]);
       setIsGroupModalOpen(false);
+      toast.success(resp.data?.message);
     } catch (error) {
       console.error("Error creating group:", error);
     }
@@ -107,7 +109,11 @@ const Chat = () => {
     });
 
     socket.on("receiveMessage", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      if (selectedChat) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+        const audio = new Audio("/sound/notif.mp3");
+        audio.play();
+      }
     });
 
     socket.on("disconnect", () => {
@@ -159,8 +165,10 @@ const Chat = () => {
       };
 
       try {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        //  setMessages((prevMessages) => [...prevMessages, newMessage]);
         socket.emit("sendMessage", newMessage);
+        const audio = new Audio("/sound/burbuja.mp3");
+        audio.play();
         setMessageInput("");
       } catch (error) {
         console.error("Error sending message:", error);
@@ -222,10 +230,13 @@ const Chat = () => {
                     : "hover:bg-gray-100"
                 }`}
               >
-                <Avatar
-                  img="https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
-                  rounded
-                />
+                <div className="relative">
+                  <Avatar
+                    img="https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
+                    rounded
+                  />
+                  <span className="w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full bg-green-500"></span>
+                </div>
                 <div className="flex-1">
                   <span className="font-semibold">
                     {chat.isGroupChat
@@ -264,11 +275,21 @@ const Chat = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        <div className="h-16 bg-green-500 text-white flex items-center px-4 shadow-lg">
+        <div className="h-16 bg-blue-600 text-white flex items-center px-4 shadow-lg">
           {selectedChat ? (
-            <div>
-              <h3>{selectedUser?.username || "Group Name"}</h3>
-              <p className="text-sm font-medium">Online</p>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <img
+                  src=""
+                  className="h-[40px] w-[40px]  rounded-full"
+                  alt=""
+                />
+                <span className="w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full bg-green-500"></span>
+              </div>
+              <div>
+                <h3>{selectedUser?.username || "Group Name"}</h3>
+                <p className="text-sm font-medium">Online</p>
+              </div>
             </div>
           ) : (
             <h2

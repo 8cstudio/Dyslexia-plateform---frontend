@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { LoginUser } from "../api/auth";
+// import { LoginUser } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { getToken, setUserDetails } from "../redux/authSlice";
 import usePost from "../customHooks/usePost";
@@ -36,7 +36,7 @@ function Login() {
 
         dispatch(getToken(resp?.token));
         dispatch(setUserDetails(resp?.user));
-        nav("/dashboard");
+        nav("/home");
       }
     },
   });

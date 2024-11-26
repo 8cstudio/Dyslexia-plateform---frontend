@@ -79,7 +79,7 @@ function Header() {
               </span>
             </Dropdown.Header>
             {user?.role === "admin" && (
-              <Dropdown.Item href="/dashboard">Dashboard</Dropdown.Item>
+              <Dropdown.Item href="/home/dashboard/">Dashboard</Dropdown.Item>
             )}
             <Dropdown.Item href="/home/profile">Profile</Dropdown.Item>
 
