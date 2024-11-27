@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Modal, Avatar, TextInput } from "flowbite-react";
-import { Paperclip, PlusCircle, Send } from "lucide-react";
+import { Paperclip, Plus, PlusCircle, Send } from "lucide-react";
 import { getChats } from "../redux/chatSlice";
 import { HiUserGroup } from "react-icons/hi";
 import toast from "react-hot-toast";
@@ -24,7 +24,7 @@ const Chat = () => {
   const { token, user } = useSelector((state: any) => state.auth);
   const { chats } = useSelector((state: any) => state.chat);
   const [groupName, setGroupName] = useState("");
-
+  const [singleUser, setSingleUser] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const dispatch = useDispatch();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -201,6 +201,24 @@ const Chat = () => {
 
   console.log("chats", chats);
   console.log("messss", messages);
+
+  const AddUser_TO_GROUP = async (id: string) => {
+    try {
+      const resp = await axios.put(
+        `/chat/add/user/${selectedChat}`,
+        { newUser: id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch(getChats());
+      toast.success(resp?.data?.message);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
+    }
+  };
   return (
     <>
       <div className="flex h-screen bg-white ">
@@ -239,10 +257,30 @@ const Chat = () => {
                   }`}
                 >
                   <div className="relative">
-                    <Avatar
-                      img="https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
-                      rounded
-                    />
+                    {chat.isGroupChat ? (
+                      <Avatar
+                        img={
+                          "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
+                        }
+                        rounded
+                      />
+                    ) : (
+                      <Avatar
+                        img={
+                          chat.isGroupChat
+                            ? chat.groupName
+                            : chat.participants
+                                .filter((p: any) => p._id !== user._id)
+                                .map(
+                                  (p: any) =>
+                                    `http://localhost:4000/uploads/${p.profile_pic}` ||
+                                    ""
+                                )
+                                .join(", ")
+                        }
+                        rounded
+                      />
+                    )}
                     <span className="w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full bg-green-500"></span>
                   </div>
                   <div className="flex-1">
@@ -260,7 +298,7 @@ const Chat = () => {
                         : "No messages yet"}
                     </p>
                   </div>
-                  <span className="text-sm text-gray-400">Online</span>
+                  {/* <span className="text-sm text-gray-400">Online</span> */}
                 </div>
               ))}
             </div>
@@ -368,9 +406,44 @@ const Chat = () => {
                 )
               )
             ) : (
-              <p className="text-gray-500">
-                Select a user or group to view messages.
-              </p>
+              <div className="flex justify-center items-center h-full flex-col gap-4 p-4 bg-gray-50 rounded-lg shadow-md">
+                {/* Chat Icon */}
+                <div className="p-4 bg-blue-100 rounded-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-12 h-12 text-blue-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M20 13.999V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h12a2 2 0 012 2v7.999z"
+                    />
+                  </svg>
+                </div>
+
+                {/* Heading */}
+                <h2 className="text-3xl font-bold text-blue-600">
+                  Dyslexia Chat Platform
+                </h2>
+
+                {/* Subtext */}
+                <p className="text-gray-600 text-center max-w-md">
+                  Select a user or group to view messages and start meaningful
+                  conversations.
+                </p>
+
+                {/* Action Button */}
+                <button
+                  className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition"
+                  onClick={() => console.log("Create a new chat clicked!")}
+                >
+                  Create New Chat
+                </button>
+              </div>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -396,11 +469,43 @@ const Chat = () => {
           )}
         </div>
 
-        <Modal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <Modal
+          show={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          size="xxl"
+        >
           <Modal.Header>Add New User</Modal.Header>
           <Modal.Body>
-            <TextInput placeholder="Username" />
-            <TextInput placeholder="Email" />
+            <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
+              {users.map((u: any) => (
+                <label
+                  key={u._id}
+                  className="relative flex flex-col items-center p-4 border rounded-lg shadow-lg bg-white hover:shadow-xl transition-shadow cursor-pointer"
+                >
+                  {/* User Image */}
+                  <div className="w-20 h-20 rounded-full overflow-hidden border mb-3">
+                    <img
+                      src={
+                        `http://localhost:4000/uploads/${u.profile_pic}` ||
+                        "https://via.placeholder.com/150"
+                      }
+                      alt={`${u.username}'s avatar`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* User Details */}
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {u.username}
+                    </h3>
+                    <p className="text-sm text-gray-500">{u.email}</p>
+                  </div>
+
+                  {/* Icon */}
+                </label>
+              ))}
+            </div>
           </Modal.Body>
           <Modal.Footer>
             <Button>Add User</Button>
@@ -410,6 +515,7 @@ const Chat = () => {
         <Modal
           show={isGroupModalOpen}
           onClose={() => setIsGroupModalOpen(false)}
+          size="xxl"
         >
           <Modal.Header>Create New Group</Modal.Header>
           <Modal.Body>
@@ -418,24 +524,80 @@ const Chat = () => {
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
             />
-            <div>
-              {users.map((u: any) => (
-                <label key={u._id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={u._id}
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      setSelectedUsers((prev) =>
-                        isChecked
-                          ? [...prev, u._id]
-                          : prev.filter((id) => id !== u._id)
-                      );
-                    }}
-                  />
-                  <span>{u.username}</span>
-                </label>
-              ))}
+            <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
+              {users.map((u: any) => {
+                const isSelected = selectedUsers.includes(u._id); // Check if the user is selected
+                return (
+                  <label
+                    key={u._id}
+                    className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg transition-shadow cursor-pointer ${
+                      isSelected
+                        ? "bg-blue-100 border-blue-500 shadow-md"
+                        : "bg-white"
+                    } hover:shadow-xl`}
+                  >
+                    {/* User Image */}
+                    <div className="w-20 h-20 rounded-full overflow-hidden border mb-3">
+                      <img
+                        src={
+                          u.profile_pic
+                            ? `http://localhost:4000/uploads/${u.profile_pic}`
+                            : "https://via.placeholder.com/150"
+                        }
+                        alt={`${u.username}'s avatar`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* User Details */}
+                    <div className="text-center space-y-2">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {u.username}
+                      </h3>
+                      <p className="text-sm text-gray-500">{u.email}</p>
+                    </div>
+
+                    {/* Icon */}
+                    <div className="absolute top-4 right-4">
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        value={u._id}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setSelectedUsers((prev) =>
+                            isChecked
+                              ? [...prev, u._id]
+                              : prev.filter((id) => id !== u._id)
+                          );
+                        }}
+                      />
+                      <span
+                        className={`flex items-center justify-center w-6 h-6 border-2 rounded-full transition ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-500 text-white"
+                            : "border-gray-300 bg-white hover:border-blue-500"
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -446,6 +608,7 @@ const Chat = () => {
       <br />
 
       <div>
+        {/* Group Participants */}
         {members.length > 0 && (
           <h2 className="text-xl my-3">Group Participants</h2>
         )}
@@ -463,7 +626,7 @@ const Chat = () => {
                       className="w-[80px] h-[80px] rounded-full border-2 border-gray-200"
                       src={
                         user?.profile_pic
-                          ? user?.profile_pic
+                          ? `http://localhost:4000/uploads/${user?.profile_pic}`
                           : "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI="
                       }
                       alt={`${user?.username}'s profile`}
@@ -489,6 +652,67 @@ const Chat = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Suggested Users */}
+        {members.length > 0 && (
+          <div>
+            <h2 className="text-xl my-3">Suggested Users</h2>
+            <div className="w-full grid lg:grid-cols-5 grid-cols-2 gap-6">
+              {users
+                .filter(
+                  (user: any) => !members.some((m: any) => m._id === user._id)
+                ) // Filter out members
+                .map((user: any, idx: number) => {
+                  return (
+                    <div
+                      key={idx}
+                      className="border relative bg-white text-center shadow-lg rounded-lg flex flex-col justify-center items-center p-6 hover:shadow-xl transition-shadow duration-300"
+                    >
+                      {/* Profile Picture */}
+                      <div className="mb-4">
+                        <img
+                          className="w-[80px] h-[80px] rounded-full border-2 border-gray-200"
+                          src={
+                            user?.profile_pic
+                              ? `http://localhost:4000/uploads/${user?.profile_pic}`
+                              : "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI="
+                          }
+                          alt={`${user?.username}'s profile`}
+                        />
+                      </div>
+
+                      {/* Username */}
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {user?.username || "Unknown User"}
+                      </h3>
+
+                      {/* Email */}
+                      {user?.email && (
+                        <p className="text-sm text-gray-500 mb-2">
+                          {user.email}
+                        </p>
+                      )}
+
+                      {/* Role (Optional) */}
+                      {user?.role && (
+                        <p className="text-sm font-medium text-blue-500 bg-blue-100 px-3 py-1 rounded-full">
+                          {user.role}
+                        </p>
+                      )}
+                      <div className="absolute top-2 right-2">
+                        <button
+                          className=""
+                          onClick={() => AddUser_TO_GROUP(user._id)}
+                        >
+                          <PlusCircle className="text-gray-500 hover:text-green-500" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         )}
       </div>
