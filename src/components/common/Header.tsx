@@ -6,7 +6,7 @@ import { clearAuth } from "../../redux/authSlice";
 function Header() {
   const navbarColor = localStorage.getItem("navbarColor");
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state: any) => state?.auth);
 
   const links = [
     {
@@ -65,7 +65,7 @@ function Header() {
                 alt="User settings"
                 img={
                   user?.profile_pic
-                    ? user?.profile_pic
+                    ? `http://localhost:4000/uploads/${user?.profile_pic}`
                     : "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI="
                 }
                 rounded

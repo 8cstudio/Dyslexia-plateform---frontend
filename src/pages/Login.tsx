@@ -7,6 +7,7 @@ import { getToken, setUserDetails } from "../redux/authSlice";
 import usePost from "../customHooks/usePost";
 import { Loader } from "lucide-react";
 import toast from "react-hot-toast";
+import { CurrentUser } from "../api/auth";
 function Login() {
   const nav = useNavigate();
   const dispatch = useDispatch();
@@ -35,7 +36,9 @@ function Login() {
         toast.success(resp?.message);
 
         dispatch(getToken(resp?.token));
-        dispatch(setUserDetails(resp?.user));
+        const user = await CurrentUser(resp?.token);
+        console.log("current user", user);
+        dispatch(setUserDetails(user));
         nav("/home");
       }
     },

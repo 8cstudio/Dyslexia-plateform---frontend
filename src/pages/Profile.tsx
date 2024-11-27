@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import toast from "react-hot-toast";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { CurrentUser } from "../api/auth";
+import { setUserDetails } from "../redux/authSlice";
+import { Loader } from "lucide-react";
 
 const Profile = () => {
   const [imagePreview, setImagePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem("token");
+  const { user } = useSelector((state: any) => state?.auth);
 
   const formik = useFormik({
     initialValues: {
-      username: "",
-      email: "",
-      password: "",
-      bio: "",
-      profilePicture: null,
+      username: user?.username || "",
+      email: user?.email || "",
+
+      bio: user.bio || "",
     },
     validationSchema: Yup.object({
       username: Yup.string()
@@ -21,39 +29,52 @@ const Profile = () => {
         .email("Invalid email address")
         .required("Email is required"),
       bio: Yup.string().max(5000).optional(),
-
-      password: Yup.string()
-        .min(8, "Password must be at least 8 characters")
-        .required("Password is required"),
-      profilePicture: Yup.mixed()
-        .nullable()
-        .required("Profile picture is required")
-        .test(
-          "fileSize",
-          "File too large",
-          (value: any) => !value || (value && value.size <= 5000000)
-        ) // Max file size 5MB
-        .test(
-          "fileFormat",
-          "Unsupported file format",
-          (value: any) =>
-            !value ||
-            (value && ["image/jpeg", "image/png"].includes(value.type))
-        ),
     }),
-    onSubmit: (values) => {
-      console.log("Form data", values);
-      // Add form submission logic here
+    onSubmit: async (values) => {
+      setLoading(true);
+      try {
+        const resp = await axios.put("/user/edit/profile", values, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const user = await CurrentUser(token as string);
+        dispatch(setUserDetails(user));
+        toast.success(resp?.data?.message);
+        // Simulate API request
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        toast.success("Profile updated successfully!");
+      } catch (error) {
+        console.log("error", error);
+        toast.error("Failed to update profile!");
+      } finally {
+        setLoading(false);
+      }
     },
   });
 
+  const dispatch = useDispatch();
   const handleFileChange = (event: any) => {
     const file = event.target.files[0];
     if (file) {
       formik.setFieldValue("profilePicture", file);
       const reader: any = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         setImagePreview(reader.result);
+        const pic = await axios.put(
+          `/user/edit/`,
+          { profile_pic: file },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        const user = await CurrentUser(token as string);
+        dispatch(setUserDetails(user));
+        toast.success(pic?.data?.message);
       };
       reader.readAsDataURL(file);
     }
@@ -62,22 +83,17 @@ const Profile = () => {
   return (
     <div className="w-full bg-white p-8">
       <form onSubmit={formik.handleSubmit}>
-        {/* Banner Section */}
-        <div className="relative w-full rounded-lg">
-          <img
-            src="https://cdn.pixabay.com/photo/2023/12/24/16/43/autumn-8467482_640.jpg"
-            className="h-[350px] w-full rounded-lg "
-            alt="Banner"
-          />
+        {/* Banner Section with Gradient */}
+        <div className="relative h-[250px]  w-full  rounded-lg  bg-gradient-to-r from-purple-500 via-pink-500 to-red-500">
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 mb-8">
             {/* Profile Picture Preview */}
             <img
               src={
                 imagePreview ||
-                "https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D"
+                `http://localhost:4000/uploads/${user.profile_pic}`
               }
               className="h-[180px] w-[180px] rounded-full border-4 border-white object-cover"
-              alt="Profile"
+              alt={`profile-${user.username}`}
             />
             <div className="mt-2">
               <input
@@ -98,7 +114,7 @@ const Profile = () => {
         </div>
 
         {/* Form Fields */}
-        <div className=" py-8  rounded-lg  w-full  mx-auto ">
+        <div className="py-8 rounded-lg w-full mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Username */}
             <div>
@@ -135,6 +151,7 @@ const Profile = () => {
               </label>
               <input
                 type="email"
+                readOnly
                 id="email"
                 {...formik.getFieldProps("email")}
                 className={`w-full px-4 py-2 mt-1 border rounded-md focus:ring focus:ring-indigo-200 focus:border-indigo-300 ${
@@ -150,12 +167,9 @@ const Profile = () => {
               )}
             </div>
           </div>
-          {/** biography */}
+          {/* Biography */}
           <div className="w-full">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-gray-600"
-            >
+            <label htmlFor="bio" className="text-sm font-medium text-gray-600">
               Biography <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -167,13 +181,13 @@ const Profile = () => {
                   : "border-gray-300"
               }`}
             />
-            {formik.touched.email && formik.errors.email && (
-              <div className="text-red-500 text-sm">{formik.errors.email}</div>
+            {formik.touched.bio && formik.errors.bio && (
+              <div className="text-red-500 text-sm">{formik.errors.bio}</div>
             )}
           </div>
 
           {/* Password */}
-          <div>
+          {/* <div>
             <label
               htmlFor="password"
               className="text-sm font-medium text-gray-600"
@@ -181,6 +195,7 @@ const Profile = () => {
               Password <span className="text-red-500">*</span>
             </label>
             <input
+              readOnly
               type="password"
               id="password"
               {...formik.getFieldProps("password")}
@@ -195,14 +210,23 @@ const Profile = () => {
                 {formik.errors.password}
               </div>
             )}
-          </div>
+          </div> */}
 
-          {/* Submit Button */}
+          {/* Submit Button with Loader */}
           <button
             type="submit"
-            className="w-full px-4 py-2 mt-6 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring focus:ring-indigo-200"
+            disabled={loading}
+            className={`w-full mt-4 py-2 flex justify-center items-center text-lg font-semibold ${
+              loading
+                ? "bg-gray-100"
+                : "text-white bg-indigo-600  hover:bg-indigo-700 "
+            } rounded-md focus:outline-none focus:ring focus:ring-indigo-300`}
           >
-            Update Profile
+            {loading ? (
+              <Loader className="animate-spin text-gray-500" />
+            ) : (
+              "Update Profile"
+            )}
           </button>
         </div>
       </form>

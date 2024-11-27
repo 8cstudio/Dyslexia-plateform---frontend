@@ -21,3 +21,17 @@ export const LoginUser = async (data: any) => {
     alert(error?.response?.data?.message);
   }
 };
+
+export const CurrentUser = async (token: string) => {
+  try {
+    const resp = await axios.get("/user/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return resp.data;
+  } catch (error: any) {
+    alert(error?.response?.data?.message);
+  }
+};
