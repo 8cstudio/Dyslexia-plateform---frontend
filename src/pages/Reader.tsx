@@ -134,8 +134,10 @@ const TextToSpeech: React.FC = () => {
   const stopSpeech = () => {
     if (synth?.speaking) {
       synth.cancel();
+
       setIsPlaying(false);
     }
+    synth.cancel();
   };
 
   const removeFile = () => {
@@ -218,14 +220,14 @@ const TextToSpeech: React.FC = () => {
               <Pause size={20} className="mr-1" />
               Pause
             </button>
-            <button
+            {/* <button
               onClick={resumeSpeech}
               className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
               disabled={!synth?.paused}
             >
               <Play size={20} className="mr-1" />
               Resume
-            </button>
+            </button> */}
             <button
               onClick={stopSpeech}
               className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"

@@ -14,13 +14,18 @@ const token = localStorage.getItem("token");
 // Async thunk to fetch chats
 export const getChats = createAsyncThunk(
   "chat/getChats",
-  async (_, thunkAPI) => {
+  async (search: string | undefined, thunkAPI) => {
     try {
-      const resp = await axios.get("/chat/chats", {
+      const url = search
+        ? `/chat/chats?search=${encodeURIComponent(search)}`
+        : "/chat/chats"; // If no search term, just hit the endpoint without the query param
+
+      const resp = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       return resp.data; // Return chats data
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response?.data || error.message);

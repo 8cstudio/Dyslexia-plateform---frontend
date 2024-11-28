@@ -93,18 +93,21 @@ const TaskManagementPage = () => {
     }
   };
 
-  const handleUpdateTask = (id: string) => {
-    const updatedTasks = tasks.map((task) => {
-      if (task._id === id) {
-        return {
-          ...task,
-          progress: task.progress + 10 > 100 ? 100 : task.progress + 10,
-          status: task.progress + 10 >= 100 ? "Completed" : task.status,
-        };
-      }
-      return task;
-    });
-    setTasks(updatedTasks);
+  const handleUpdateTask = async (id: string) => {
+    try {
+      const resp = await axios.put(
+        `/task/${id}/progress`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch(fetchTasks());
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message);
+    }
   };
 
   const calculateOverallProgress = () => {
@@ -136,6 +139,25 @@ const TaskManagementPage = () => {
     "bg-teal-100",
   ];
   const textColor = localStorage.getItem("textColor");
+
+  const undoTask = async (id: string) => {
+    try {
+      const resp = await axios.put(
+        `/task/${id}/undo`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch(fetchTasks());
+      return resp?.data;
+    } catch (error: any) {
+      console.log(error, "mmm");
+      toast.error(error?.response?.data?.message);
+    }
+  };
   return (
     <div className="container mx-auto p-6" style={{ color: `${textColor}` }}>
       <div className="flex justify-between items-center mb-6">
@@ -260,8 +282,21 @@ const TaskManagementPage = () => {
                         <span className="p-2 px-4 border bg-green-500 rounded-full text-white text-sm font-semibold shadow-lg transform hover:scale-105 transition duration-300">
                           Completed
                         </span>
+                        <button
+                          onClick={() => {
+                            setTaskToDelete(task._id);
+                            setShowDeleteModal(true);
+                          }}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <FaTrash className="mr-2" />
+                          Delete
+                        </button>
 
-                        <button className="px-2 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors">
+                        <button
+                          onClick={() => undoTask(task._id)}
+                          className="px-2 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
+                        >
                           Undo
                         </button>
                       </div>

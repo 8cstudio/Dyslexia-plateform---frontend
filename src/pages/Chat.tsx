@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Modal, Avatar, TextInput } from "flowbite-react";
-import { Paperclip, Plus, PlusCircle, Send } from "lucide-react";
+import { Loader, Paperclip, Plus, PlusCircle, Send } from "lucide-react";
 import { getChats } from "../redux/chatSlice";
 import { HiUserGroup } from "react-icons/hi";
 import toast from "react-hot-toast";
@@ -28,7 +28,8 @@ const Chat = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const dispatch = useDispatch();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const [search, setSearch] = useState("");
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -108,6 +109,13 @@ const Chat = () => {
       console.log("Socket connected:", socket.id);
     });
 
+    socket.emit("user-connected", user._id);
+    dispatch(getChats());
+    socket.on("online-users", (users) => {
+      console.log("Online users:", users);
+      setOnlineUsers(users);
+    });
+
     socket.on("receiveMessage", (message: any) => {
       if (selectedChat) {
         setMessages((prevMessages) => [...prevMessages, message]);
@@ -123,7 +131,7 @@ const Chat = () => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [socket]);
 
   const textColor = localStorage.getItem("textColor");
 
@@ -142,12 +150,13 @@ const Chat = () => {
         socket.emit("leaveRoom", selectedChat);
       };
     }
-  }, [selectedChat]);
+  }, [selectedChat, socket]);
 
   // Dispatch to fetch all chats
   useEffect(() => {
+    console.log("calling api");
     dispatch(getChats());
-  }, [dispatch]);
+  }, [dispatch, search]);
 
   // Handle sending a message
   const handleSendMessage = async () => {
@@ -165,7 +174,9 @@ const Chat = () => {
       };
 
       try {
-        //  setMessages((prevMessages) => [...prevMessages, newMessage]);
+        //setMessages((prevMessages) => [...prevMessages, newMessage]);
+        // messages.push(newMessage);
+        getMessages();
         socket.emit("sendMessage", newMessage);
         const audio = new Audio("/sound/burbuja.mp3");
         audio.play();
@@ -214,33 +225,52 @@ const Chat = () => {
           },
         }
       );
-      dispatch(getChats());
+      dispatch(getChats({ search: "" }));
       toast.success(resp?.data?.message);
     } catch (error: any) {
       toast.error(error.response?.data?.message);
     }
   };
+
+  const ChangeMessageStatus = async (id: string) => {
+    const resp = await axios.put(
+      `/message/status/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    dispatch(getChats());
+  };
   return (
     <>
       <div className="flex h-screen bg-white ">
         {/* Sidebar */}
-        <aside className="w-1/4 bg-white border p-4 overflow-auto">
+        <aside className="w-1/4 bg-white border relative p-4 overflow-auto">
           <input
             type="text"
+            onChange={(e) => {
+              setTimeout(() => {
+                setSearch(e.target.value);
+              }, 1000);
+            }}
             placeholder="Search"
             className="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 mb-4"
           />
           {isPending ? (
             <div className="h-[150px] flex justify-center items-center">
-              <span>Loading...</span>
+              <Loader className="animate-spin" />
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto h-[390px]">
               {chats?.map((chat: any) => (
                 <div
                   key={chat._id}
                   onClick={() => {
                     setSelectedChat(chat._id);
+                    ChangeMessageStatus(chat?._id);
                     chat?.isGroupChat === true
                       ? setMembers(chat?.participants)
                       : setMembers([]);
@@ -251,7 +281,7 @@ const Chat = () => {
                         : chat.participants.find((p: any) => p._id !== user._id)
                     );
                   }}
-                  className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition ${
+                  className={`flex items-center relative space-x-3 p-3 rounded-lg cursor-pointer transition ${
                     selectedChat === chat._id
                       ? "bg-blue-50 border-l-4 border-blue-600"
                       : "hover:bg-gray-100"
@@ -282,7 +312,28 @@ const Chat = () => {
                         rounded
                       />
                     )}
-                    <span className="w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full bg-green-500"></span>
+                    {!chat.isGroupChat &&
+                      chat.participants
+                        .filter((p: any) => p._id !== user._id)
+                        .map((p: any) => (
+                          <span
+                            className={`w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full ${
+                              p.isOnline ? "bg-green-400" : "bg-yellow-400"
+                            }`}
+                          ></span>
+                        ))}
+
+                    {/* {chat.participants.map((participant: any) => {
+                      const isOnline = onlineUsers.includes(participant); // Check if the participant is online
+                      return (
+                        <span
+                          key={participant} // Add a unique key for each participant
+                          className={`w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full ${
+                            isOnline ? "bg-green-400" : "bg-yellow-400"
+                          }`}
+                        ></span>
+                      );
+                    })} */}
                   </div>
                   <div className="flex-1">
                     <span className="font-semibold">
@@ -295,16 +346,27 @@ const Chat = () => {
                     </span>
                     <p className="text-[13px] text-gray-500 truncate">
                       {chat?.messages?.length
-                        ? chat.messages[chat.messages.length - 1]?.content
+                        ? chat.messages[0]?.content.substring(0, 15) + "..."
                         : "No messages yet"}
                     </p>
                   </div>
-                  {/* <span className="text-sm text-gray-400">Online</span> */}
+                  {chat.messages.filter(
+                    (c: any) => c.isSeen === false && c.sender !== user._id
+                  ).length > 0 && (
+                    <span className="absolute right-2 top-2 p-2 bg-green-400 border text-white text-[12px] h-[20px] w-[20px] flex justify-center items-center rounded-full">
+                      {
+                        chat.messages.filter(
+                          (c: any) =>
+                            c.isSeen === false && c.sender !== user._id
+                        ).length
+                      }
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
           )}
-          <div className="mt-4">
+          <div className="mt-4 absolute p-5 w-[90%] bottom-0">
             <Button
               onClick={() => setIsModalOpen(true)}
               className="w-full text-white bg-blue-600 hover:bg-blue-700 mb-2"
@@ -363,19 +425,40 @@ const Chat = () => {
                     } mb-3`}
                   >
                     <div
-                      className={`p-4 rounded-lg shadow-sm max-w-xs ${
+                      className={`relative p-4 rounded-2xl shadow-md max-w-xs ${
                         message.sender &&
                         (message.sender._id || message.sender) === user._id
-                          ? "bg-blue-100 text-right"
-                          : "bg-gray-200"
+                          ? "bg-blue-500 text-white text-right"
+                          : "bg-gray-100 text-gray-800"
                       }`}
+                      style={{
+                        borderRadius:
+                          message.sender &&
+                          (message.sender._id || message.sender) === user._id
+                            ? "20px 20px 4px 20px"
+                            : "20px 20px 20px 4px",
+                      }}
                     >
                       <p className="text-sm font-semibold">
                         {message.sender === user._id
                           ? "You"
-                          : message?.sender?.username}
+                          : message?.sender?.username || selectedUser?.username}
                       </p>
                       <p className="mt-1">{message.content}</p>
+                      <p className="mt-2 text-xs opacity-80">
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <span
+                        className={`absolute w-0 h-0 border-t-[10px] border-t-transparent ${
+                          message.sender &&
+                          (message.sender._id || message.sender) === user._id
+                            ? "border-r-[10px] border-r-blue-500 right-0 translate-x-1"
+                            : "border-l-[10px] border-l-gray-100 left-0 -translate-x-1"
+                        }`}
+                      ></span>
                     </div>
                   </div>
                 ) : (
@@ -389,12 +472,19 @@ const Chat = () => {
                     } mb-3`}
                   >
                     <div
-                      className={`p-4 rounded-lg shadow-sm max-w-xs ${
+                      className={`relative p-4 rounded-2xl shadow-md max-w-xs ${
                         message.sender &&
                         (message.sender._id || message.sender) === user._id
-                          ? "bg-blue-100 text-right"
-                          : "bg-gray-200"
+                          ? "bg-blue-500 text-white text-right"
+                          : "bg-gray-100 text-gray-800"
                       }`}
+                      style={{
+                        borderRadius:
+                          message.sender &&
+                          (message.sender._id || message.sender) === user._id
+                            ? "20px 20px 4px 20px"
+                            : "20px 20px 20px 4px",
+                      }}
                     >
                       <p className="text-sm font-semibold">
                         {message.sender === user._id
@@ -402,6 +492,20 @@ const Chat = () => {
                           : selectedUser?.username}
                       </p>
                       <p className="mt-1">{message.content}</p>
+                      <p className="mt-2 text-xs opacity-80">
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      <span
+                        className={`absolute w-0 h-0 border-t-[10px] border-t-transparent ${
+                          message.sender &&
+                          (message.sender._id || message.sender) === user._id
+                            ? "border-r-[10px] border-r-blue-500 right-0 translate-x-1"
+                            : "border-l-[10px] border-l-gray-100 left-0 -translate-x-1"
+                        }`}
+                      ></span>
                     </div>
                   </div>
                 )
@@ -478,57 +582,61 @@ const Chat = () => {
           <Modal.Header>Add New User</Modal.Header>
           <Modal.Body>
             <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
-              {users.map((u: any) => {
-                // Check if the chat is not a group and both participants match
+              {users
+                .filter((p: any) => p._id !== user._id)
+                .map((u: any) => {
+                  // Check if the chat is not a group and both participants match
 
-                const isInChat = chats.some((chat: any) => {
-                  if (chat.isGroupChat === false) {
-                    return chat.participants.some((c: any) => c._id === u._id);
-                  }
-                  return false; // Explicitly return false for group chats
-                });
+                  const isInChat = chats.some((chat: any) => {
+                    if (chat.isGroupChat === false) {
+                      return chat.participants.some(
+                        (c: any) => c._id === u._id
+                      );
+                    }
+                    return false; // Explicitly return false for group chats
+                  });
 
-                return (
-                  <label
-                    key={u._id}
-                    className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg 
+                  return (
+                    <label
+                      key={u._id}
+                      className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg 
         ${
           isInChat
             ? "bg-green-200 cursor-not-allowed"
             : "bg-white hover:shadow-xl cursor-pointer"
         } 
         transition-shadow`}
-                  >
-                    {/* User Image */}
-                    <div className="w-20 h-20  rounded-full overflow-hidden border mb-3">
-                      <img
-                        src={
-                          `http://localhost:4000/uploads/${u.profile_pic}` ||
-                          "https://via.placeholder.com/150"
-                        }
-                        alt={`${u.username}'s avatar`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    >
+                      {/* User Image */}
+                      <div className="w-20 h-20  rounded-full overflow-hidden border mb-3">
+                        <img
+                          src={
+                            `http://localhost:4000/uploads/${u.profile_pic}` ||
+                            "https://via.placeholder.com/150"
+                          }
+                          alt={`${u.username}'s avatar`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
 
-                    {/* User Details */}
-                    <div className="text-center space-y-2">
-                      <h3 className="text-lg font-semibold text-gray-800">
-                        {u.username}
-                      </h3>
-                      <p className="text-sm text-gray-500">{u.email}</p>
-                    </div>
-                    <div className="absolute top-2 left-2">
-                      <button
-                        className="text-gray-500 hover:text-green-500"
-                        onClick={() => addToList(u._id)}
-                      >
-                        <PlusCircle />
-                      </button>
-                    </div>
-                  </label>
-                );
-              })}
+                      {/* User Details */}
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          {u.username}
+                        </h3>
+                        <p className="text-sm text-gray-500">{u.email}</p>
+                      </div>
+                      <div className="absolute top-2 left-2">
+                        <button
+                          className="text-gray-500 hover:text-green-500"
+                          onClick={() => addToList(u._id)}
+                        >
+                          <PlusCircle />
+                        </button>
+                      </div>
+                    </label>
+                  );
+                })}
             </div>
           </Modal.Body>
         </Modal>
@@ -546,79 +654,82 @@ const Chat = () => {
               onChange={(e) => setGroupName(e.target.value)}
             />
             <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
-              {users.map((u: any) => {
-                const isSelected = selectedUsers.includes(u._id); // Check if the user is selected
-                return (
-                  <label
-                    key={u._id}
-                    className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg transition-shadow cursor-pointer ${
-                      isSelected
-                        ? "bg-blue-100 border-blue-500 shadow-md"
-                        : "bg-white"
-                    } hover:shadow-xl`}
-                  >
-                    {/* User Image */}
-                    <div className="w-20 h-20 rounded-full overflow-hidden border mb-3">
-                      <img
-                        src={
-                          u.profile_pic
-                            ? `http://localhost:4000/uploads/${u.profile_pic}`
-                            : "https://via.placeholder.com/150"
-                        }
-                        alt={`${u.username}'s avatar`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+              {users
+                .filter((p: any) => p._id !== user._id)
+                .map((u: any) => {
+                  const isSelected = selectedUsers.includes(u._id); // Check if the user is selected
 
-                    {/* User Details */}
-                    <div className="text-center space-y-2">
-                      <h3 className="text-lg font-semibold text-gray-800">
-                        {u.username}
-                      </h3>
-                      <p className="text-sm text-gray-500">{u.email}</p>
-                    </div>
+                  return (
+                    <label
+                      key={u._id}
+                      className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg transition-shadow cursor-pointer ${
+                        isSelected
+                          ? "bg-blue-100 border-blue-500 shadow-md"
+                          : "bg-white"
+                      } hover:shadow-xl`}
+                    >
+                      {/* User Image */}
+                      <div className="w-20 h-20 rounded-full overflow-hidden border mb-3">
+                        <img
+                          src={
+                            u.profile_pic
+                              ? `http://localhost:4000/uploads/${u.profile_pic}`
+                              : "https://via.placeholder.com/150"
+                          }
+                          alt={`${u.username}'s avatar`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
 
-                    {/* Icon */}
-                    <div className="absolute top-4 right-4">
-                      <input
-                        type="checkbox"
-                        className="hidden"
-                        value={u._id}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          setSelectedUsers((prev) =>
-                            isChecked
-                              ? [...prev, u._id]
-                              : prev.filter((id) => id !== u._id)
-                          );
-                        }}
-                      />
-                      <span
-                        className={`flex items-center justify-center w-6 h-6 border-2 rounded-full transition ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-500 text-white"
-                            : "border-gray-300 bg-white hover:border-blue-500"
-                        }`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="w-4 h-4"
+                      {/* User Details */}
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          {u.username}
+                        </h3>
+                        <p className="text-sm text-gray-500">{u.email}</p>
+                      </div>
+
+                      {/* Icon */}
+                      <div className="absolute top-4 right-4">
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          value={u._id}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setSelectedUsers((prev) =>
+                              isChecked
+                                ? [...prev, u._id]
+                                : prev.filter((id) => id !== u._id)
+                            );
+                          }}
+                        />
+                        <span
+                          className={`flex items-center justify-center w-6 h-6 border-2 rounded-full transition ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-500 text-white"
+                              : "border-gray-300 bg-white hover:border-blue-500"
+                          }`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </span>
-                    </div>
-                  </label>
-                );
-              })}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })}
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -665,11 +776,11 @@ const Chat = () => {
                   )}
 
                   {/* Role (Optional) */}
-                  {user?.role && (
+                  {/* {user?.role && (
                     <p className="text-sm font-medium text-blue-500 bg-blue-100 px-3 py-1 rounded-full">
                       {user.role}
                     </p>
-                  )}
+                  )} */}
                 </div>
               );
             })}
@@ -717,11 +828,11 @@ const Chat = () => {
                       )}
 
                       {/* Role (Optional) */}
-                      {user?.role && (
+                      {/* {user?.role && (
                         <p className="text-sm font-medium text-blue-500 bg-blue-100 px-3 py-1 rounded-full">
                           {user.role}
                         </p>
-                      )}
+                      )} */}
                       <div className="absolute top-2 right-2">
                         <button
                           className=""

@@ -79,13 +79,14 @@ function Header() {
               </span>
             </Dropdown.Header>
             {user?.role === "admin" && (
-              <Dropdown.Item>
-                <Link to={"/home/dashboard/"}>Dashboard</Link>
-              </Dropdown.Item>
+              <Link to={"/home/dashboard/"}>
+                <Dropdown.Item>Dashboard</Dropdown.Item>
+              </Link>
             )}
-            <Dropdown.Item>
-              <Link to={"/home/profile"}>Profile</Link>
-            </Dropdown.Item>
+
+            <Link to={"/home/profile"}>
+              <Dropdown.Item>Profile</Dropdown.Item>
+            </Link>
 
             <Dropdown.Divider />
             <Dropdown.Item onClick={() => dispatch(clearAuth())}>

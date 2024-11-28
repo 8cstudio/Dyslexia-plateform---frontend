@@ -12,3 +12,19 @@
     url("./assets/opendyslexic-0.91.12/compiled/OpenDyslexic-Regular.woff")
       format("woff");
 }
+
+/* For Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: none; /* Hides the scrollbar in Firefox */
+  scrollbar-color: transparent transparent; /* Ensures no scrollbar colors are visible */
+}
+
+/* For Internet Explorer (Optional) */
+body {
+  -ms-overflow-style: none; /* Hides the scrollbar in IE */
+}
