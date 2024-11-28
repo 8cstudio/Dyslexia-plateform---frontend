@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -13,14 +13,21 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("token");
   const { user } = useSelector((state: any) => state?.auth);
+  const dispatch = useDispatch();
+
+  console.log("profile", user);
+  const getUser = async () => {
+    const resp = await CurrentUser(token as string);
+    dispatch(setUserDetails(resp));
+  };
 
   const formik = useFormik({
     initialValues: {
       username: user?.username || "",
       email: user?.email || "",
-
       bio: user.bio || "",
     },
+
     validationSchema: Yup.object({
       username: Yup.string()
         .min(3, "Username must be at least 3 characters")
@@ -52,8 +59,9 @@ const Profile = () => {
       }
     },
   });
-
-  const dispatch = useDispatch();
+  useEffect(() => {
+    getUser();
+  }, [token, dispatch]);
   const handleFileChange = (event: any) => {
     const file = event.target.files[0];
     if (file) {

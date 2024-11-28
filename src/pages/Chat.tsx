@@ -194,6 +194,7 @@ const Chat = () => {
         }
       );
       console.log("Added to contact list:", resp.data);
+      dispatch(getChats());
     } catch (error) {
       console.error("Error adding user:", error);
     }
@@ -477,39 +478,59 @@ const Chat = () => {
           <Modal.Header>Add New User</Modal.Header>
           <Modal.Body>
             <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
-              {users.map((u: any) => (
-                <label
-                  key={u._id}
-                  className="relative flex flex-col items-center p-4 border rounded-lg shadow-lg bg-white hover:shadow-xl transition-shadow cursor-pointer"
-                >
-                  {/* User Image */}
-                  <div className="w-20 h-20 rounded-full overflow-hidden border mb-3">
-                    <img
-                      src={
-                        `http://localhost:4000/uploads/${u.profile_pic}` ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt={`${u.username}'s avatar`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              {users.map((u: any) => {
+                // Check if the chat is not a group and both participants match
 
-                  {/* User Details */}
-                  <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {u.username}
-                    </h3>
-                    <p className="text-sm text-gray-500">{u.email}</p>
-                  </div>
+                const isInChat = chats.some((chat: any) => {
+                  if (chat.isGroupChat === false) {
+                    return chat.participants.some((c: any) => c._id === u._id);
+                  }
+                  return false; // Explicitly return false for group chats
+                });
 
-                  {/* Icon */}
-                </label>
-              ))}
+                return (
+                  <label
+                    key={u._id}
+                    className={`relative flex flex-col items-center p-4 border rounded-lg shadow-lg 
+        ${
+          isInChat
+            ? "bg-green-200 cursor-not-allowed"
+            : "bg-white hover:shadow-xl cursor-pointer"
+        } 
+        transition-shadow`}
+                  >
+                    {/* User Image */}
+                    <div className="w-20 h-20  rounded-full overflow-hidden border mb-3">
+                      <img
+                        src={
+                          `http://localhost:4000/uploads/${u.profile_pic}` ||
+                          "https://via.placeholder.com/150"
+                        }
+                        alt={`${u.username}'s avatar`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* User Details */}
+                    <div className="text-center space-y-2">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {u.username}
+                      </h3>
+                      <p className="text-sm text-gray-500">{u.email}</p>
+                    </div>
+                    <div className="absolute top-2 left-2">
+                      <button
+                        className="text-gray-500 hover:text-green-500"
+                        onClick={() => addToList(u._id)}
+                      >
+                        <PlusCircle />
+                      </button>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </Modal.Body>
-          <Modal.Footer>
-            <Button>Add User</Button>
-          </Modal.Footer>
         </Modal>
 
         <Modal
