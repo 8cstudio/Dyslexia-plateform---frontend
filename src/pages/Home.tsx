@@ -24,14 +24,24 @@ const Home = () => {
     },
   ];
 
+  const textColor = localStorage.getItem("textColor");
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-5">
+    <div
+      style={{ color: `${textColor ? textColor : ""}` }}
+      className="min-h-screen w-full bg-gray-50 p-5"
+    >
       {/* Header */}
       <header className="text-center py-10">
-        <h1 className="text-4xl font-bold text-blue-600">
+        <h1
+          style={{ color: `${textColor ? textColor : ""}` }}
+          className="text-4xl font-bold text-blue-600"
+        >
           Welcome to Dyslexia Learning Platform
         </h1>
-        <p className="text-gray-600 mt-3 text-lg">
+        <p
+          style={{ color: `${textColor ? textColor : ""}` }}
+          className="text-gray-600 mt-3 text-lg"
+        >
           Empowering dyslexic adults with accessible and engaging learning
           tools.
         </p>
@@ -39,7 +49,10 @@ const Home = () => {
 
       {/* Image Gallery */}
       <section className="py-10">
-        <h2 className="text-2xl font-semibold text-center mb-5 text-blue-600">
+        <h2
+          style={{ color: `${textColor ? textColor : ""}` }}
+          className="text-2xl font-semibold text-center mb-5 text-blue-600"
+        >
           Interactive Image Gallery
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -54,7 +67,10 @@ const Home = () => {
                 className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
               />
               <div className="p-3">
-                <p className="text-gray-800 text-center font-medium">
+                <p
+                  style={{ color: `${textColor ? textColor : ""}` }}
+                  className="text-gray-800 text-center font-medium"
+                >
                   {image.caption}
                 </p>
               </div>
@@ -64,7 +80,7 @@ const Home = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-10 bg-blue-100 rounded-md shadow-md">
+      {/* <section className="py-10 bg-blue-100 rounded-md shadow-md">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-blue-600 mb-3">
             Join Our Community
@@ -77,7 +93,7 @@ const Home = () => {
             Join Now
           </button>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
     </div>

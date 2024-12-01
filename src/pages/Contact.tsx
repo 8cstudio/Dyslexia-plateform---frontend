@@ -60,13 +60,18 @@ const Feedback = () => {
     }
   };
 
+  const textColor = localStorage.getItem("textColor");
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
       <div className="max-w-lg w-full bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold text-center mb-4">
           We Value Your Feedback
         </h2>
-        <p className="text-gray-600 text-center mb-6">
+        <p
+          style={{ color: `${textColor ? textColor : ""}` }}
+          className="text-gray-600 text-center mb-6"
+        >
           Let us know how we can improve!
         </p>
 
@@ -82,10 +87,16 @@ const Feedback = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Rating */}
           <div>
-            <label className="block text-gray-700 font-medium">
+            <label
+              style={{ color: `${textColor ? textColor : ""}` }}
+              className="block text-gray-700 font-medium"
+            >
               How do you feel about our platform?
             </label>
-            <div className="flex items-center justify-center space-x-4 mt-4">
+            <div
+              style={{ color: `${textColor ? textColor : ""}` }}
+              className="flex items-center justify-center space-x-4 mt-4"
+            >
               {[
                 { emoji: "😢", label: "Sad", value: 1 },
                 { emoji: "😐", label: "Neutral", value: 2 },
@@ -111,8 +122,9 @@ const Feedback = () => {
           </div>
 
           {/* Message */}
-          <div>
+          <div style={{ color: `${textColor ? textColor : ""}` }}>
             <label
+              style={{ color: `${textColor ? textColor : ""}` }}
               htmlFor="message"
               className="block text-gray-700 font-medium"
             >

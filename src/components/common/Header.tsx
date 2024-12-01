@@ -56,8 +56,12 @@ function Header() {
             Dyslexia Learning
           </span>
         </Navbar.Brand>
-        <div className="flex md:order-2">
+        <div
+          className="flex md:order-2"
+          style={{ color: `${textColor ? textColor : ""}` }}
+        >
           <Dropdown
+            style={{ color: `${textColor ? textColor : ""}` }}
             arrowIcon={false}
             inline
             label={
@@ -73,23 +77,46 @@ function Header() {
             }
           >
             <Dropdown.Header>
-              <span className="block text-sm">{user.username}</span>
-              <span className="block truncate text-sm font-medium">
+              <span
+                style={{ color: `${textColor ? textColor : ""}` }}
+                className="block text-sm"
+              >
+                {user.username}
+              </span>
+              <span
+                style={{ color: `${textColor ? textColor : ""}` }}
+                className="block truncate text-sm font-medium"
+              >
                 {user?.email}
               </span>
             </Dropdown.Header>
             {user?.role === "admin" && (
-              <Link to={"/home/dashboard/"}>
-                <Dropdown.Item>Dashboard</Dropdown.Item>
+              <Link
+                style={{ color: `${textColor ? textColor : ""}` }}
+                to={"/home/dashboard/"}
+              >
+                <Dropdown.Item
+                  style={{ color: `${textColor ? textColor : ""}` }}
+                >
+                  Dashboard
+                </Dropdown.Item>
               </Link>
             )}
 
-            <Link to={"/home/profile"}>
-              <Dropdown.Item>Profile</Dropdown.Item>
+            <Link
+              style={{ color: `${textColor ? textColor : ""}` }}
+              to={"/home/profile"}
+            >
+              <Dropdown.Item style={{ color: `${textColor ? textColor : ""}` }}>
+                Profile
+              </Dropdown.Item>
             </Link>
 
             <Dropdown.Divider />
-            <Dropdown.Item onClick={() => dispatch(clearAuth())}>
+            <Dropdown.Item
+              style={{ color: `${textColor ? textColor : ""}` }}
+              onClick={() => dispatch(clearAuth())}
+            >
               Sign out
             </Dropdown.Item>
           </Dropdown>

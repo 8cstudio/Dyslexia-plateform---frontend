@@ -101,6 +101,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchFeedbacks();
   }, []);
+  const textColor = localStorage.getItem("textColor");
   return (
     <div className="min-h-screen p-5 ">
       <div className="max-w-7xl mx-auto">
@@ -111,14 +112,22 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="p-6 bg-white rounded-lg shadow flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-medium text-gray-600">Total Users</h2>
+              <h2
+                style={{ color: `${textColor ? textColor : ""}` }}
+                className="text-lg font-medium text-gray-600"
+              >
+                Total Users
+              </h2>
               <p className="text-2xl font-bold">{users.length}</p>
             </div>
             <Users size={32} className="text-blue-500" />
           </div>
           <div className="p-6 bg-white rounded-lg shadow flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-medium text-gray-600">
+              <h2
+                style={{ color: `${textColor ? textColor : ""}` }}
+                className="text-lg font-medium text-gray-600"
+              >
                 Total Feedbacks
               </h2>
               <p className="text-2xl font-bold">{feedbacks.length}</p>

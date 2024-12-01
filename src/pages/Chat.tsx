@@ -30,6 +30,7 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [file, setFile] = useState(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -117,11 +118,9 @@ const Chat = () => {
     });
 
     socket.on("receiveMessage", (message: any) => {
-      if (selectedChat) {
-        setMessages((prevMessages) => [...prevMessages, message]);
-        const audio = new Audio("/sound/notif.mp3");
-        audio.play();
-      }
+      setMessages((prevMessages) => [...prevMessages, message]);
+      const audio = new Audio("/sound/notif.mp3");
+      audio.play();
     });
 
     socket.on("disconnect", () => {
@@ -165,25 +164,59 @@ const Chat = () => {
       return;
     }
 
-    if (messageInput.trim()) {
-      const newMessage = {
-        chat: selectedChat,
-        content: messageInput,
-        sender: user._id,
-        isGroupChat: false,
-      };
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
 
       try {
-        //setMessages((prevMessages) => [...prevMessages, newMessage]);
-        // messages.push(newMessage);
-        getMessages();
+        const { data } = await axios.post(
+          `http://localhost:4000/chat/${selectedChat}/upload`,
+          formData
+        );
+        console.log("data", data);
+
+        const newMessage = {
+          chat: selectedChat,
+          content: data.fileUrl,
+          ext: data?.ext,
+          sender: user._id,
+          type: "file",
+          isGroupChat: selectedUser.isGroupChat,
+        };
+
         socket.emit("sendMessage", newMessage);
+        getMessages();
+
         const audio = new Audio("/sound/burbuja.mp3");
         audio.play();
-        // dispatch(getChats());
+
+        setFile(null);
         setMessageInput("");
       } catch (error) {
-        console.error("Error sending message:", error);
+        console.error("Error uploading file:", error);
+      }
+      return;
+    } else {
+      if (messageInput.trim()) {
+        const newMessage = {
+          chat: selectedChat,
+          content: messageInput,
+          sender: user._id,
+          type: "text",
+          isGroupChat: selectedUser.isGroupChat,
+        };
+
+        try {
+          socket.emit("sendMessage", newMessage);
+          getMessages();
+
+          const audio = new Audio("/sound/burbuja.mp3");
+          audio.play();
+
+          setMessageInput("");
+        } catch (error) {
+          console.error("Error sending message:", error);
+        }
       }
     }
   };
@@ -244,9 +277,99 @@ const Chat = () => {
     );
     dispatch(getChats());
   };
+
+  const handleFileSend = async (e: any) => {
+    const file = e.target.files[0]; // Get the selected file
+    if (!file) return;
+
+    console.log("Selected file:", file);
+
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append("file", file); // Attach file
+    formData.append("sender", user._id); // Add sender ID
+    formData.append("chat", selectedChat); // Add chat ID
+    formData.append("content", "this is file sending"); // Empty content for file message
+    formData.append("isGroupChat", selectedUser.isGroupChat); // Is group chat or not
+    console.log("form data", formData);
+    try {
+      // Upload file to the server
+      const { data } = await axios.post(
+        `http://localhost:4000/chat/${selectedChat}/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // Ensure multipart/form-data headers
+          },
+        }
+      );
+
+      console.log("File uploaded successfully:", data);
+
+      // Emit file message to the server
+      const fileMessage = {
+        chat: selectedChat,
+        file: data.file, // Use returned file info (e.g., filename or URL)
+        sender: user._id,
+        isGroupChat: selectedUser.isGroupChat,
+      };
+
+      // Emit to server via Socket.io
+      socket.emit("sendFile", fileMessage);
+
+      console.log("File message sent:", fileMessage);
+
+      // Optionally update UI
+      // setMessages((prev) => [...prev, fileMessage]);
+    } catch (error) {
+      console.error("File upload failed:", error);
+    }
+  };
+
   return (
     <>
-      <div className="flex h-screen bg-white ">
+      <div className="flex h-screen bg-white relative">
+        {file && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="relative bg-white rounded-lg shadow-lg p-6 max-w-lg w-full">
+              <button
+                className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full focus:outline-none hover:bg-red-600"
+                onClick={() => setFile(null)}
+              >
+                ✕
+              </button>
+              {file?.type.startsWith("image/") && (
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Image Preview"
+                  className="w-full max-h-80 object-cover rounded"
+                />
+              )}
+              {file?.type === "application/pdf" && (
+                <iframe
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-80 border rounded"
+                  title="PDF Preview"
+                ></iframe>
+              )}
+              {file.type ===
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && (
+                <div className="text-center py-6">
+                  <span className="text-gray-700 text-lg font-medium">
+                    Preview not available for DOCX files.
+                  </span>
+                </div>
+              )}
+              <button
+                className="mt-4 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 focus:outline-none"
+                onClick={handleSendMessage}
+              >
+                Send File
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sidebar */}
         <aside className="w-1/4 bg-white border relative p-4 overflow-auto">
           <input
@@ -344,7 +467,10 @@ const Chat = () => {
                             .map((p: any) => p.username)
                             .join(", ")}
                     </span>
-                    <p className="text-[13px] text-gray-500 truncate">
+                    <p
+                      style={{ color: `${textColor ? textColor : ""}` }}
+                      className="text-[13px] text-gray-500 truncate"
+                    >
                       {chat?.messages?.length
                         ? chat.messages[0]?.content.substring(0, 15) + "..."
                         : "No messages yet"}
@@ -386,7 +512,10 @@ const Chat = () => {
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col">
-          <div className="h-16 bg-blue-600 text-white flex items-center px-4 shadow-lg">
+          <div
+            style={{ color: `${textColor ? textColor : ""}` }}
+            className="h-16 bg-blue-300 text-white flex items-center px-4 shadow-lg"
+          >
             {selectedChat ? (
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -395,16 +524,31 @@ const Chat = () => {
                     className="h-[40px] w-[40px]  rounded-full"
                     alt=""
                   />
-                  <span className="w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full bg-green-500"></span>
+                  {selectedUser.isGroupChat === false && (
+                    <span
+                      className={`w-[15px] top-0 right-0 border-2 absolute border-white h-[15px] rounded-full ${
+                        selectedUser?.isOnline
+                          ? "bg-green-500"
+                          : "bg-yellow-400"
+                      } `}
+                    ></span>
+                  )}
                 </div>
                 <div>
-                  <h3>{selectedUser?.username || "Group Name"}</h3>
-                  <p className="text-sm font-medium">Online</p>
+                  <h3 style={{ color: `${textColor ? textColor : ""}` }}>
+                    {selectedUser?.username || selectedUser?.groupName}
+                  </h3>
+                  <p
+                    style={{ color: `${textColor ? textColor : ""}` }}
+                    className="text-sm font-medium"
+                  >
+                    {selectedUser?.email}
+                  </p>
                 </div>
               </div>
             ) : (
               <h2
-                // style={{ color: `${textColor}` }}
+                style={{ color: `${textColor}` }}
                 className="text-xl font-semibold"
               >
                 Select a chat to start messaging
@@ -428,10 +572,11 @@ const Chat = () => {
                       className={`relative p-4 rounded-2xl shadow-md max-w-xs ${
                         message.sender &&
                         (message.sender._id || message.sender) === user._id
-                          ? "bg-blue-500 text-white text-right"
+                          ? "bg-blue-200 text-white text-right"
                           : "bg-gray-100 text-gray-800"
                       }`}
                       style={{
+                        color: `${textColor ? textColor : ""}`,
                         borderRadius:
                           message.sender &&
                           (message.sender._id || message.sender) === user._id
@@ -444,7 +589,93 @@ const Chat = () => {
                           ? "You"
                           : message?.sender?.username || selectedUser?.username}
                       </p>
-                      <p className="mt-1">{message.content}</p>
+                      <p className="mt-1">
+                        {message.type === "text" ? (
+                          message.content
+                        ) : message?.ext === "application/pdf" ? (
+                          <div className="relative">
+                            <object
+                              height="150px"
+                              width="150px"
+                              data={`http://localhost:4000/files/${message.content}`}
+                              type="application/pdf"
+                              className="border rounded w-full max-w-[150px] h-auto"
+                            >
+                              <div className="absolute top-0 left-0 w-full h-full bg-opacity-50 bg-gray-500 flex items-center justify-center text-white font-semibold text-sm rounded">
+                                <div className="text-center">
+                                  <p>PDF Preview Not Available</p>
+                                  <a
+                                    href={`http://localhost:4000/files/${message.content}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 underline flex items-center gap-2 mt-2"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 4v16h16V4M9 12h6m-6 4h6"
+                                      />
+                                    </svg>
+                                    Download PDF
+                                  </a>
+                                </div>
+                              </div>
+                            </object>
+                          </div>
+                        ) : message?.ext?.startsWith("image") ? (
+                          <div className="relative group">
+                            <img
+                              src={`http://localhost:4000/files/${message.content}`}
+                              alt="Image Preview"
+                              height="150px"
+                              width="150px"
+                              className="rounded shadow-md object-cover w-full h-auto max-w-[150px]"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center text-white text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="font-semibold">
+                                Image Preview
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative flex flex-col items-center justify-center w-[150px] h-[150px] bg-gray-200 rounded shadow-md">
+                            <div className="text-gray-500 mb-2">
+                              Preview Not Available
+                            </div>
+                            <a
+                              href={`http://localhost:4000/files/${message.content}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline flex items-center gap-2"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v16h16V4M9 12h6m-6 4h6"
+                                />
+                              </svg>
+                              Download File
+                            </a>
+                          </div>
+                        )}
+                      </p>
+
                       <p className="mt-2 text-xs opacity-80">
                         {new Date(message.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
@@ -470,15 +701,17 @@ const Chat = () => {
                         ? "justify-end"
                         : ""
                     } mb-3`}
+                    style={{ color: `${textColor ? textColor : ""}` }}
                   >
                     <div
                       className={`relative p-4 rounded-2xl shadow-md max-w-xs ${
                         message.sender &&
                         (message.sender._id || message.sender) === user._id
-                          ? "bg-blue-500 text-white text-right"
+                          ? "bg-blue-200 text-white text-right"
                           : "bg-gray-100 text-gray-800"
                       }`}
                       style={{
+                        color: `${textColor ? textColor : ""}`,
                         borderRadius:
                           message.sender &&
                           (message.sender._id || message.sender) === user._id
@@ -487,11 +720,98 @@ const Chat = () => {
                       }}
                     >
                       <p className="text-sm font-semibold">
-                        {message.sender === user._id
+                        {message.sender &&
+                        (message.sender._id || message.sender) === user._id
                           ? "You"
                           : selectedUser?.username}
                       </p>
-                      <p className="mt-1">{message.content}</p>
+                      <p className="mt-1">
+                        {message.type === "text" ? (
+                          message.content
+                        ) : message?.ext === "application/pdf" ? (
+                          <div className="relative">
+                            <object
+                              height="150px"
+                              width="150px"
+                              data={`http://localhost:4000/files/${message.content}`}
+                              type="application/pdf"
+                              className="border rounded w-full max-w-[150px] h-auto"
+                            >
+                              <div className="absolute top-0 left-0 w-full h-full bg-opacity-50 bg-gray-500 flex items-center justify-center text-white font-semibold text-sm rounded">
+                                <div className="text-center">
+                                  <p>PDF Preview Not Available</p>
+                                  <a
+                                    href={`http://localhost:4000/files/${message.content}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 underline flex items-center gap-2 mt-2"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 4v16h16V4M9 12h6m-6 4h6"
+                                      />
+                                    </svg>
+                                    Download PDF
+                                  </a>
+                                </div>
+                              </div>
+                            </object>
+                          </div>
+                        ) : message?.ext?.startsWith("image") ? (
+                          <div className="relative group">
+                            <img
+                              src={`http://localhost:4000/files/${message.content}`}
+                              alt="Image Preview"
+                              height="150px"
+                              width="150px"
+                              className="rounded shadow-md object-cover w-full h-auto max-w-[150px]"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center text-white text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="font-semibold">
+                                Image Preview
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative flex flex-col items-center justify-center w-[150px] h-[150px] bg-gray-200 rounded shadow-md">
+                            <div className="text-gray-500 mb-2">
+                              Preview Not Available
+                            </div>
+                            <a
+                              href={`http://localhost:4000/files/${message.content}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline flex items-center gap-2"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v16h16V4M9 12h6m-6 4h6"
+                                />
+                              </svg>
+                              Download File
+                            </a>
+                          </div>
+                        )}
+                      </p>
+
                       <p className="mt-2 text-xs opacity-80">
                         {new Date(message.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
@@ -513,13 +833,17 @@ const Chat = () => {
             ) : (
               <div className="flex justify-center items-center h-full flex-col gap-4 p-4 bg-gray-50 rounded-lg shadow-md">
                 {/* Chat Icon */}
-                <div className="p-4 bg-blue-100 rounded-full">
+                <div
+                  style={{ color: `${textColor ? textColor : ""}` }}
+                  className="p-4 bg-blue-100 rounded-full"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
+                    style={{ color: `${textColor ? textColor : ""}` }}
                     className="w-12 h-12 text-blue-600"
                   >
                     <path
@@ -531,32 +855,43 @@ const Chat = () => {
                 </div>
 
                 {/* Heading */}
-                <h2 className="text-3xl font-bold text-blue-600">
+                <h2
+                  style={{ color: `${textColor ? textColor : ""}` }}
+                  className="text-3xl font-bold text-blue-600"
+                >
                   Dyslexia Chat Platform
                 </h2>
 
                 {/* Subtext */}
-                <p className="text-gray-600 text-center max-w-md">
+                <p
+                  style={{ color: `${textColor ? textColor : ""}` }}
+                  className="text-gray-600 text-center max-w-md"
+                >
                   Select a user or group to view messages and start meaningful
                   conversations.
                 </p>
 
                 {/* Action Button */}
-                <button
+                {/* <button
                   className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition"
                   onClick={() => console.log("Create a new chat clicked!")}
                 >
                   Create New Chat
-                </button>
+                </button> */}
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
           {selectedChat && (
             <div className="h-16 border-t flex items-center px-4 space-x-3 bg-white">
-              <button className="p-2 hover:bg-gray-200 rounded-full">
+              <label className="p-2 hover:bg-gray-200 rounded-full cursor-pointer">
                 <Paperclip size={20} />
-              </button>
+                <input
+                  type="file"
+                  onChange={(e: any) => setFile(e.target.files[0])}
+                  className="hidden"
+                />
+              </label>
               <input
                 type="text"
                 value={messageInput}
@@ -620,11 +955,22 @@ const Chat = () => {
                       </div>
 
                       {/* User Details */}
-                      <div className="text-center space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-800">
+                      <div
+                        style={{ color: `${textColor ? textColor : ""}` }}
+                        className="text-center space-y-2"
+                      >
+                        <h3
+                          style={{ color: `${textColor ? textColor : ""}` }}
+                          className="text-lg font-semibold text-gray-800"
+                        >
                           {u.username}
                         </h3>
-                        <p className="text-sm text-gray-500">{u.email}</p>
+                        <p
+                          style={{ color: `${textColor ? textColor : ""}` }}
+                          className="text-sm text-gray-500"
+                        >
+                          {u.email}
+                        </p>
                       </div>
                       <div className="absolute top-2 left-2">
                         <button
@@ -642,18 +988,24 @@ const Chat = () => {
         </Modal>
 
         <Modal
+          style={{ color: `${textColor ? textColor : ""}` }}
           show={isGroupModalOpen}
           onClose={() => setIsGroupModalOpen(false)}
           size="xxl"
         >
-          <Modal.Header>Create New Group</Modal.Header>
+          <Modal.Header style={{ color: `${textColor ? textColor : ""}` }}>
+            Create New Group
+          </Modal.Header>
           <Modal.Body>
             <TextInput
               placeholder="Group Name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
             />
-            <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5">
+            <div
+              style={{ color: `${textColor ? textColor : ""}` }}
+              className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5"
+            >
               {users
                 .filter((p: any) => p._id !== user._id)
                 .map((u: any) => {
@@ -683,10 +1035,18 @@ const Chat = () => {
 
                       {/* User Details */}
                       <div className="text-center space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-800">
+                        <h3
+                          style={{ color: `${textColor ? textColor : ""}` }}
+                          className="text-lg font-semibold text-gray-800"
+                        >
                           {u.username}
                         </h3>
-                        <p className="text-sm text-gray-500">{u.email}</p>
+                        <p
+                          style={{ color: `${textColor ? textColor : ""}` }}
+                          className="text-sm text-gray-500"
+                        >
+                          {u.email}
+                        </p>
                       </div>
 
                       {/* Icon */}
@@ -766,13 +1126,21 @@ const Chat = () => {
                   </div>
 
                   {/* Username */}
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3
+                    style={{ color: `${textColor ? textColor : ""}` }}
+                    className="text-lg font-semibold text-gray-800"
+                  >
                     {user?.username || "Unknown User"}
                   </h3>
 
                   {/* Email */}
                   {user?.email && (
-                    <p className="text-sm text-gray-500 mb-2">{user.email}</p>
+                    <p
+                      style={{ color: `${textColor ? textColor : ""}` }}
+                      className="text-sm text-gray-500 mb-2"
+                    >
+                      {user.email}
+                    </p>
                   )}
 
                   {/* Role (Optional) */}
@@ -789,7 +1157,7 @@ const Chat = () => {
 
         {/* Suggested Users */}
         {members.length > 0 && (
-          <div>
+          <div style={{ color: `${textColor ? textColor : ""}` }}>
             <h2 className="text-xl my-3">Suggested Users</h2>
             <div className="w-full grid lg:grid-cols-5 grid-cols-2 gap-6">
               {users
@@ -816,13 +1184,19 @@ const Chat = () => {
                       </div>
 
                       {/* Username */}
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3
+                        style={{ color: `${textColor ? textColor : ""}` }}
+                        className="text-lg font-semibold text-gray-800"
+                      >
                         {user?.username || "Unknown User"}
                       </h3>
 
                       {/* Email */}
                       {user?.email && (
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p
+                          style={{ color: `${textColor ? textColor : ""}` }}
+                          className="text-sm text-gray-500 mb-2"
+                        >
                           {user.email}
                         </p>
                       )}

@@ -186,7 +186,10 @@ const TaskManagementPage = () => {
 
       {/* Task List */}
       {tasks.length < 1 && (
-        <div className="h-[200px] flex justify-center items-center w-full">
+        <div
+          style={{ color: `${textColor ? textColor : ""}` }}
+          className="h-[200px] flex justify-center items-center w-full"
+        >
           <h3>You have no tasks created yet, please create one</h3>
         </div>
       )}
@@ -211,6 +214,7 @@ const TaskManagementPage = () => {
           >
             <thead
               // style={{ color: `${textColor}` }}
+              style={{ color: `${textColor ? textColor : ""}` }}
               className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-400"
             >
               <tr>
@@ -224,6 +228,7 @@ const TaskManagementPage = () => {
             <tbody>
               {tasks.map((task, index) => (
                 <tr
+                  style={{ color: `${textColor ? textColor : ""}` }}
                   key={task._id}
                   className={`bg-white border-b dark:bg-gray-900 dark:border-gray-700 ${
                     colors[index % colors.length]
