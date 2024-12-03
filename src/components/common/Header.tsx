@@ -2,11 +2,33 @@ import { Avatar, Dropdown, Navbar } from "flowbite-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { clearAuth } from "../../redux/authSlice";
+import { useEffect, useState } from "react";
+import { getChats } from "../../redux/chatSlice";
 
 function Header() {
   const navbarColor = localStorage.getItem("navbarColor");
   const dispatch = useDispatch();
+  const [notif, setNotif] = useState(0);
   const { user } = useSelector((state: any) => state?.auth);
+
+  const { chats } = useSelector((state: any) => state.chat);
+
+  useEffect(() => {
+    dispatch(getChats());
+  }, [dispatch]);
+
+  const length = chats
+    .map((chat: any) => {
+      // Filter messages that are sent by someone other than the user and have isSeen === false
+      const unreadMessages = chat.messages.filter(
+        (message: any) =>
+          message.sender._id !== user._id && message.isSeen === false
+      );
+      return unreadMessages.length; // Return the count of unread messages for this chat
+    })
+    .reduce((acc: number, curr: number) => acc + curr, 0); // Sum the unread message counts across all chats
+
+  console.log("Total unread messages:", length);
 
   const links = [
     {
@@ -126,6 +148,7 @@ function Header() {
           {links.map((link: any, idx: number) => {
             return (
               <Navbar.Link
+                className="relative"
                 style={{
                   color: `${link.path === pathname ? "green" : textColor}`,
                 }}
@@ -134,6 +157,11 @@ function Header() {
                 key={idx}
               >
                 {link.text}
+                {link.text === "My Chats" && (
+                  <span className="h-[25px] absolute top-[-15px] right-[-10px] text-[10px] animate-pulse w-[25px] rounded-full bg-red-600 text-white flex justify-center items-center">
+                    {length}
+                  </span>
+                )}
               </Navbar.Link>
             );
           })}

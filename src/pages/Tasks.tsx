@@ -230,9 +230,7 @@ const TaskManagementPage = () => {
                 <tr
                   style={{ color: `${textColor ? textColor : ""}` }}
                   key={task._id}
-                  className={`bg-white border-b dark:bg-gray-900 dark:border-gray-700 ${
-                    colors[index % colors.length]
-                  }`}
+                  className={`bg-white border-b dark:bg-gray-900 dark:border-gray-700 `}
                 >
                   <td className="px-6 py-4">{task.title}</td>
                   <td className="px-6 py-4">

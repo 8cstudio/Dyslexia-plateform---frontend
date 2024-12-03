@@ -40,6 +40,7 @@ function Login() {
         console.log("current user", user);
         dispatch(setUserDetails(user));
         nav("/home");
+        window.location.reload();
       }
     },
   });
