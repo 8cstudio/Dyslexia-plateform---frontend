@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Modal, Avatar, TextInput } from "flowbite-react";
+import { Button, Modal, Avatar, TextInput, FileInput } from "flowbite-react";
 import { Loader, Paperclip, Plus, PlusCircle, Send } from "lucide-react";
 import { getChats } from "../redux/chatSlice";
 import { HiUserGroup } from "react-icons/hi";
@@ -31,6 +31,7 @@ const Chat = () => {
   const [search, setSearch] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [file, setFile] = useState(null);
+  const [logo, setLogo] = useState(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -52,23 +53,44 @@ const Chat = () => {
 
   // Create new group
   const handleCreateGroup = async () => {
+    // if (!groupName || !selectedUsers.length || !logo) {
+    //   toast.error("Please fill in all required fields.");
+    //   return;
+    // }
+
+    const formData = new FormData();
+
+    // Append the required fields to the form data
+    formData.append("groupName", groupName);
+    formData.append("otherUser", JSON.stringify(selectedUsers)); // Convert array to JSON string
+    formData.append("isGroupChat", "true"); // FormData values must be strings
+    formData.append("logo", logo);
+
     try {
-      const resp = await axios.post(
-        "/chat/create",
-        { groupName, otherUser: selectedUsers, isGroupChat: true },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Make the API call
+      const response = await axios.post("/chat/create", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data", // Ensure correct content type
+        },
+      });
+
+      // Dispatch actions and reset states after a successful response
       dispatch(getChats()); // Refresh chats list
+      setLogo(null);
       setGroupName("");
       setSelectedUsers([]);
       setIsGroupModalOpen(false);
-      toast.success(resp.data?.message);
-    } catch (error) {
+
+      // Notify the user of success
+      toast.success(response.data?.message || "Group created successfully!");
+    } catch (error: any) {
+      // Log error and notify user
       console.error("Error creating group:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "An error occurred while creating the group."
+      );
     }
   };
 
@@ -326,6 +348,9 @@ const Chat = () => {
     }
   };
 
+  console.log("selected userccc", selectedUser);
+  console.log("selected chattt", selectedChat);
+
   return (
     <>
       <div className="flex h-screen bg-white relative">
@@ -372,16 +397,28 @@ const Chat = () => {
 
         {/* Sidebar */}
         <aside className="w-1/4 bg-white border relative p-4 overflow-auto">
-          <input
-            type="text"
-            onChange={(e) => {
-              setTimeout(() => {
-                setSearch(e.target.value);
-              }, 1000);
-            }}
-            placeholder="Search"
-            className="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 mb-4"
-          />
+          <div className="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md">
+            <div className="text-blue-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M21 16.11A7.003 7.003 0 0111 4.9 7.003 7.003 0 0113 19h.11A7.003 7.003 0 0121 16.11zM9.828 21a6.978 6.978 0 01-4.19-1.51A4.002 4.002 0 013 15h.1A4.978 4.978 0 017.07 17H9.828a4.978 4.978 0 012.07.51A4.978 4.978 0 0113 19H9.828z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+              Chats
+            </h2>
+          </div>
+
           {isPending ? (
             <div className="h-[150px] flex justify-center items-center">
               <Loader className="animate-spin" />
@@ -400,7 +437,11 @@ const Chat = () => {
 
                     setSelectedUser(
                       chat.isGroupChat
-                        ? { username: chat.groupName }
+                        ? {
+                            group: chat?.groupName,
+                            logo: chat?.logo,
+                            isGroupChat: chat?.isGroupChat,
+                          }
                         : chat.participants.find((p: any) => p._id !== user._id)
                     );
                   }}
@@ -414,7 +455,9 @@ const Chat = () => {
                     {chat.isGroupChat ? (
                       <Avatar
                         img={
-                          "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
+                          chat.logo !== ""
+                            ? `http://localhost:4000/group/${chat.logo}`
+                            : "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
                         }
                         rounded
                       />
@@ -428,7 +471,7 @@ const Chat = () => {
                                 .map(
                                   (p: any) =>
                                     `http://localhost:4000/uploads/${p.profile_pic}` ||
-                                    ""
+                                    "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg"
                                 )
                                 .join(", ")
                         }
@@ -520,7 +563,11 @@ const Chat = () => {
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <img
-                    src=""
+                    src={
+                      selectedUser?.isGroupChat === true
+                        ? `http://localhost:4000/group/${selectedUser.logo}`
+                        : `http://localhost:4000/uploads/${selectedUser.profile_pic}`
+                    }
                     className="h-[40px] w-[40px]  rounded-full"
                     alt=""
                   />
@@ -536,13 +583,13 @@ const Chat = () => {
                 </div>
                 <div>
                   <h3 style={{ color: `${textColor ? textColor : ""}` }}>
-                    {selectedUser?.username || selectedUser?.groupName}
+                    {selectedUser?.username || selectedUser?.group}
                   </h3>
                   <p
                     style={{ color: `${textColor ? textColor : ""}` }}
                     className="text-sm font-medium"
                   >
-                    {selectedUser?.email}
+                    {!selectedUser?.isGroupChat && selectedUser?.email}
                   </p>
                 </div>
               </div>
@@ -1002,6 +1049,14 @@ const Chat = () => {
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
             />
+            <div className="my-4">
+              <input
+                type="file"
+                className="border rounded-lg w-full"
+                accept="image/*"
+                onChange={(e: any) => setLogo(e.target.files[0])}
+              />
+            </div>
             <div
               style={{ color: `${textColor ? textColor : ""}` }}
               className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5 my-5"

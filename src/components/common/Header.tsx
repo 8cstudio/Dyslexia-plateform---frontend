@@ -157,7 +157,7 @@ function Header() {
                 key={idx}
               >
                 {link.text}
-                {link.text === "My Chats" && (
+                {link.text === "My Chats" && length > 1 && (
                   <span className="h-[25px] absolute top-[-15px] right-[-10px] text-[10px] animate-pulse w-[25px] rounded-full bg-red-600 text-white flex justify-center items-center">
                     {length}
                   </span>

@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CurrentUser } from "../api/auth";
 import { setUserDetails } from "../redux/authSlice";
 import { Loader } from "lucide-react";
-
+import { User, Calendar } from "lucide-react";
 const Profile = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -117,6 +117,34 @@ const Profile = () => {
               >
                 Change Photo
               </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+          {/* Gender */}
+          <div className="flex items-center p-4 border rounded-md bg-gray-50 dark:bg-gray-800 shadow-sm">
+            <User className="text-blue-500 w-6 h-6 mr-4" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                Gender
+              </h3>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                {user.gender || "Not specified"}
+              </p>
+            </div>
+          </div>
+
+          {/* Date of Birth */}
+          <div className="flex items-center p-4 border rounded-md bg-gray-50 dark:bg-gray-800 shadow-sm">
+            <Calendar className="text-green-500 w-6 h-6 mr-4" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                Date of Birth
+              </h3>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                {new Date(user.dob).toLocaleDateString() || "Not specified"}
+              </p>
             </div>
           </div>
         </div>
